@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ADHD Bingo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── Left / mobile screens ── -->
+    <div id="screens">
+
+      <!-- Setup -->
+      <div id="screen-setup" class="screen active">
+        <div class="screen-header">
+          <h1>今天的 Bingo</h1>
+          <p class="subtitle">告诉我今天你想完成什么</p>
+        </div>
+        <div class="card">
+          <div class="section-label">棋盘大小</div>
+          <div class="size-selector">
+            <button class="size-btn" data-size="4">4×4</button>
+            <button class="size-btn active" data-size="5">5×5</button>
+            <button class="size-btn" data-size="6">6×6</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-label">今天的大事（1–3 件）</div>
+          <div id="task-inputs">
+            <div class="task-row">
+              <span class="task-num">1</span>
+              <input type="text" class="task-input" placeholder="今天最重要的一件事" maxlength="16">
+            </div>
+          </div>
+          <button id="add-task-btn" class="text-btn">＋ 再加一件</button>
+        </div>
+        <button id="generate-btn" class="primary-btn">生成今日 Bingo →</button>
+      </div>
+
+      <!-- Bingo controls (left col / mobile top) -->
+      <div id="screen-bingo" class="screen">
+        <div id="big-tasks-header">
+          <div id="big-tasks-list"></div>
+        </div>
+        <div id="tier-bar"><div id="tier-fill"></div></div>
+        <div id="tier-label"></div>
+        <div id="unlock-banner" class="banner hidden"></div>
+      </div>
+
+      <!-- History -->
+      <div id="screen-history" class="screen">
+        <div class="screen-header"><h2>历史记录</h2></div>
+        <div id="streak-box">
+          <span id="streak-num">0</span>
+          <span id="streak-label">连续天数</span>
+        </div>
+        <div id="heatmap-container">
+          <div id="heatmap-months"></div>
+          <div id="heatmap-wrap">
+            <div id="heatmap-dow">
+              <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+            </div>
+            <div id="heatmap-grid"></div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="ldot t0"></span>未开始</div>
+          <div class="legend-item"><span class="ldot t1"></span>完成大事</div>
+          <div class="legend-item"><span class="ldot t2"></span>普通 Bingo</div>
+          <div class="legend-item"><span class="ldot t3"></span>大事 Bingo</div>
+          <div class="legend-item"><span class="ldot t4"></span>全完成</div>
+        </div>
+        <div class="mock-row">
+          <button id="mock-data-btn" class="text-btn mock-btn">⚙ 生成模拟数据</button>
+          <button id="clear-mock-btn" class="text-btn mock-btn clear-btn">✕ 清除模拟数据</button>
+        </div>
+      </div>
+
+      <!-- Pools -->
+      <div id="screen-pools" class="screen">
+        <div class="card" id="ratio-card">
+          <div class="section-label">抽取配比</div>
+          <div id="ratio-rows"></div>
+        </div>
+        <div id="pools-list"></div>
+      </div>
+
+      <!-- Pool Edit -->
+      <div id="screen-pool-edit" class="screen">
+        <div class="edit-header">
+          <button id="edit-back-btn" class="icon-btn">←</button>
+          <input id="edit-pool-name" type="text" class="edit-name-input" maxlength="12">
+        </div>
+        <div id="physics-container">
+          <canvas id="physics-canvas"></canvas>
+        </div>
+        <div id="edit-add-row">
+          <input id="edit-term-input" type="text" class="add-input" placeholder="新词条" maxlength="16">
+          <div class="weight-inline">
+            <button class="w-step" id="add-w-minus">−</button>
+            <span id="add-w-val">1</span>
+            <button class="w-step" id="add-w-plus">＋</button>
+          </div>
+          <button id="edit-add-btn" class="add-btn">加入</button>
+        </div>
+      </div>
+
+      <!-- Nav lives inside #screens so it sticks to bottom of left col on desktop -->
+      <nav id="bottom-nav">
+        <button class="nav-btn active" data-screen="bingo">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="1" y="1" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="12" y="1" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="1" y="12" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="12" y="12" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span>Bingo</span>
+        </button>
+        <button class="nav-btn" data-screen="history">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="1" y="3" width="20" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M7 1v4M15 1v4M1 9h20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>历史</span>
+        </button>
+        <button class="nav-btn" data-screen="pools">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M11 7v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>词条池</span>
+        </button>
+      </nav>
+    </div><!-- /#screens -->
+
+    <!-- ── Board panel: right col on desktop, inline below controls on mobile ── -->
+    <div id="board-panel" class="hidden">
+      <div id="board-wrap">
+        <div id="bingo-board"></div>
+      </div>
+      <div id="board-empty">
+        今日的 Bingo 棋盘<br>将在这里显示
+      </div>
+    </div>
+
+  </div><!-- /#app -->
+
+  <!-- Term edit sheet -->
+  <div id="term-edit-sheet" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-sheet">
+      <input id="term-edit-label" type="text" class="term-name-input" maxlength="20">
+      <div class="weight-row">
+        <span class="weight-title">权重</span>
+        <div class="weight-stepper">
+          <button class="w-step large" id="weight-minus">−</button>
+          <span id="weight-val">1</span>
+          <button class="w-step large" id="weight-plus">＋</button>
+        </div>
+      </div>
+      <button id="term-save-btn" class="primary-btn">保存</button>
+      <button id="term-delete-btn" class="text-btn danger-btn">删除这个词条</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

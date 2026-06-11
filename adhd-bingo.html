@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ADHD Bingo</title>
+  <style>
+:root {
+  --bg:   #F2F2F7;
+  --bg2:  #E5E5EA;
+  --card: #FFFFFF;
+
+  --text:  #1C1C1E;
+  --text2: #3C3C43;
+  --muted: #8E8E93;
+  --sep:   rgba(60,60,67,0.15);
+
+  --accent: #B41C2C;
+
+  --t0: #E5E5EA;
+  --t1: #C8C8CC;
+  --t2: #6C6C70;
+  --t3: #3A3A3C;
+  --t4: #B41C2C;
+
+  --radius:    16px;
+  --radius-sm: 12px;
+  --radius-xs: 9px;
+  --nav-h:     68px;
+
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.07), 0 0 1px rgba(0,0,0,0.04);
+  --shadow-sm:   0 1px 4px  rgba(0,0,0,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app { padding-bottom: calc(var(--nav-h) + 8px); }
+
+.screen { display: none; padding: 20px 16px 16px; animation: fadeUp .18s ease; }
+.screen.active { display: block; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.screen-header { margin-bottom: 22px; }
+.screen-header h1 { font-size: 28px; font-weight: 700; letter-spacing: -.5px; }
+.screen-header h2 { font-size: 22px; font-weight: 700; letter-spacing: -.4px; }
+.subtitle { font-size: 14px; color: var(--muted); margin-top: 4px; }
+.section-label {
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--muted); margin-bottom: 11px;
+}
+
+.card {
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--shadow-card); padding: 16px; margin-bottom: 12px;
+}
+
+.size-selector {
+  display: flex; background: var(--bg2); border-radius: var(--radius-xs); padding: 2px;
+}
+.size-btn {
+  flex: 1; padding: 8px 0; border-radius: calc(var(--radius-xs) - 2px);
+  border: none; background: transparent;
+  color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer; transition: all .18s;
+}
+.size-btn.active {
+  background: var(--card); color: var(--text); font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12), 0 0 1px rgba(0,0,0,0.06);
+}
+
+.task-row { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+.task-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--text); color: #fff;
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.task-input {
+  flex: 1; background: var(--bg); border: none; border-radius: var(--radius-xs);
+  padding: 10px 12px; color: var(--text); font-size: 15px; outline: none;
+}
+.task-input:focus { background: var(--bg2); }
+.task-input::placeholder { color: var(--muted); }
+.remove-task-btn {
+  width: 26px; height: 26px; border-radius: 50%; border: none;
+  background: var(--bg2); color: var(--muted); font-size: 17px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.primary-btn {
+  width: 100%; padding: 14px; background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity .15s; margin-top: 4px;
+  box-shadow: 0 3px 10px rgba(180,28,44,.22);
+}
+.primary-btn:active { opacity: .82; }
+.text-btn {
+  background: none; border: none; color: var(--text2);
+  font-size: 14px; font-weight: 500; cursor: pointer; padding: 5px 0; display: block; margin-top: 4px;
+}
+
+#big-tasks-header { padding: 16px 16px 0; }
+#big-tasks-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+
+.bt-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; background: var(--card); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm); cursor: pointer; transition: background .15s; user-select: none;
+}
+.bt-item.done { background: var(--bg2); }
+
+.bt-check {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--bg2); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; transition: all .18s;
+}
+.bt-item.done .bt-check { background: var(--text); border-color: var(--text); color: #fff; }
+.bt-text { font-size: 14px; flex: 1; color: var(--text); font-weight: 500; }
+.bt-item.done .bt-text { color: var(--muted); }
+
+#tier-bar { margin: 0 16px 4px; height: 3px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
+#tier-fill {
+  height: 100%; background: var(--accent); border-radius: 2px;
+  transition: width .45s cubic-bezier(.4,0,.2,1); width: 0%;
+}
+#tier-label { margin: 0 16px 10px; font-size: 12px; color: var(--muted); font-weight: 500; min-height: 17px; }
+
+#app { padding-bottom: calc(var(--nav-h) + 8px); }
+
+#board-panel { padding: 0 16px 16px; }
+
+#board-empty {
+  text-align: center; color: var(--muted); font-size: 14px; font-weight: 500;
+  padding: 40px 24px; line-height: 1.7;
+}
+#board-wrap { width: 100%; }
+#bingo-board { display: grid; gap: 7px; width: 100%; aspect-ratio: 1; }
+
+.cell {
+  background: #FFFFFF;
+  border-radius: var(--radius-xs);
+  box-shadow: 0 0 0 1.5px rgba(60,60,67,0.11);
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 4px; cursor: pointer;
+  transition: transform .12s, background .18s, box-shadow .18s; overflow: hidden; user-select: none;
+}
+.cell:active { transform: scale(.91); }
+
+.cell-txt {
+  font-size: clamp(8px, 1.85vw, 11px); line-height: 1.35; color: var(--text2);
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+  word-break: break-all;
+}
+
+.cell.big {
+  background: #F2F2F7;
+  box-shadow: 0 0 0 1.5px #C7C7CC;
+}
+.cell.big .cell-txt { color: var(--text); font-weight: 600; }
+
+.cell.done {
+  background: #FFFFFF;
+  box-shadow: 0 0 0 1.5px var(--accent);
+}
+.cell.done .cell-txt { color: var(--text2); }
+
+.cell.bingo-hi {
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.cell.bingo-hi .cell-txt { color: var(--text2); font-weight: 600; }
+
+.cell.big.done,
+.cell.big.bingo-hi {
+  background: var(--accent);
+  box-shadow: 0 0 0 1.5px var(--accent);
+}
+.cell.big.done .cell-txt,
+.cell.big.bingo-hi .cell-txt {
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.banner {
+  margin: 10px 16px 0; padding: 12px 16px; background: var(--bg2);
+  border-radius: var(--radius-sm); text-align: center;
+  font-size: 13px; font-weight: 600; color: var(--text2);
+  box-shadow: var(--shadow-sm); animation: fadeUp .3s ease;
+}
+
+#streak-box {
+  display: flex; flex-direction: column; align-items: center;
+  margin-bottom: 18px; padding: 20px 16px;
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow-card);
+}
+#streak-num { font-size: 52px; font-weight: 700; color: var(--text); line-height: 1; }
+#streak-label { font-size: 13px; color: var(--muted); margin-top: 5px; font-weight: 500; }
+
+#heatmap-container { width: 100%; overflow: hidden; }
+
+#heatmap-months {
+  display: flex;
+  gap: 4px;
+  margin-left: 25px;
+  margin-bottom: 4px;
+  overflow: hidden;
+}
+.hm-month-col {
+  flex: 1;
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: 500;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+#heatmap-wrap { display: flex; gap: 5px; width: 100%; }
+#heatmap-dow { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; width: 20px; }
+#heatmap-dow span { font-size: 9px; color: var(--muted); flex: 1; display: flex; align-items: center; }
+
+#heatmap-grid { display: flex; gap: 4px; flex: 1; }
+.hm-week { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.hm-cell {
+  width: 100%; aspect-ratio: 1;
+  border-radius: 6px;
+  background: var(--t0);
+  flex-shrink: 0;
+}
+.hm-cell.t1 { background: var(--t1); }
+.hm-cell.t2 { background: var(--t2); }
+.hm-cell.t3 { background: var(--t3); }
+.hm-cell.t4 { background: var(--t4); }
+.hm-cell.future { opacity: 0.3; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 14px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+.ldot { width: 11px; height: 11px; border-radius: 3px; background: var(--t0); }
+.ldot.t1 { background: var(--t1); } .ldot.t2 { background: var(--t2); }
+.ldot.t3 { background: var(--t3); } .ldot.t4 { background: var(--t4); }
+
+.mock-row { display: flex; gap: 16px; margin-top: 16px; }
+.mock-btn { color: var(--muted); font-size: 12px; margin-top: 0; }
+.clear-btn { color: var(--accent) !important; }
+
+.alloc-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0; gap: 12px;
+  border-bottom: 1px solid var(--sep);
+}
+.alloc-row:last-child { border-bottom: none; }
+.alloc-name {
+  font-size: 14px; font-weight: 500; color: var(--text2);
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.alloc-auto { font-size: 14px; color: var(--muted); flex-shrink: 0; }
+.alloc-ctrl { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+.alloc-btn {
+  width: 32px; height: 32px; border: none;
+  background: var(--bg2); color: var(--text); font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .12s;
+}
+.alloc-btn:first-child { border-radius: var(--radius-xs) 0 0 var(--radius-xs); }
+.alloc-btn:last-child  { border-radius: 0 var(--radius-xs) var(--radius-xs) 0; }
+.alloc-btn:active { background: var(--sep); }
+.alloc-btn:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+.alloc-num {
+  min-width: 32px; height: 32px; background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 600; color: var(--text);
+}
+
+.pool-card {
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--shadow-card); margin-bottom: 12px; overflow: hidden;
+  position: relative;
+}
+.pool-card.dragging {
+  opacity: 0.75;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  z-index: 10;
+}
+.pool-card.drag-over {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.pool-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; cursor: pointer;
+}
+.pool-head-left { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 600; }
+.pool-badge {
+  font-size: 11px; padding: 2px 8px; border-radius: 10px;
+  background: var(--bg2); color: var(--muted); font-weight: 500;
+}
+.pool-badge.locked { opacity: .5; }
+.pool-chevron { font-size: 11px; color: var(--muted); transition: transform .2s; }
+.pool-chevron.open { transform: rotate(180deg); }
+.pool-head-right { display: flex; align-items: center; gap: 6px; }
+
+.drag-handle {
+  color: var(--muted); font-size: 16px; cursor: grab; padding: 4px;
+  user-select: none; touch-action: none; flex-shrink: 0;
+  letter-spacing: -1px;
+}
+.drag-handle:active { cursor: grabbing; color: var(--text2); }
+
+.pool-body { display: none; border-top: 1px solid var(--sep); padding: 13px 16px; }
+.pool-body.open { display: block; }
+.pool-locked-msg { font-size: 13px; color: var(--muted); text-align: center; padding: 8px 0; font-weight: 500; }
+
+.terms-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.term-chip {
+  background: var(--bg); border-radius: 20px;
+  padding: 5px 11px; font-size: 12px; font-weight: 500; color: var(--text2);
+  display: flex; align-items: center; gap: 5px;
+}
+
+.add-row { display: flex; gap: 7px; }
+.add-input {
+  flex: 1; background: var(--bg); border: none; border-radius: var(--radius-xs);
+  padding: 9px 12px; color: var(--text); font-size: 14px; outline: none;
+}
+.add-input:focus { background: var(--bg2); }
+.add-input::placeholder { color: var(--muted); }
+.add-btn {
+  padding: 9px 16px; background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius-xs); font-size: 14px; font-weight: 600; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+}
+
+#bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; height: var(--nav-h);
+  background: rgba(242,242,247,0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 0.5px solid rgba(60,60,67,0.2);
+  display: flex; align-items: center; z-index: 50;
+}
+.nav-btn {
+  flex: 1; height: 100%; background: none; border: none;
+  color: var(--muted); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  font-size: 10px; font-weight: 500; cursor: pointer; transition: color .15s;
+}
+.nav-btn.active { color: var(--accent); }
+
+.modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-end; }
+.modal.hidden { display: none; }
+.modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.28); }
+.modal-sheet {
+  position: relative; width: 100%; max-width: 480px; margin: 0 auto;
+  background: var(--card); border-radius: var(--radius) var(--radius) 0 0;
+  padding: 8px 20px 44px; z-index: 1;
+  box-shadow: 0 -4px 30px rgba(0,0,0,0.1);
+}
+.modal-sheet::before {
+  content: ''; display: block; width: 36px; height: 4px;
+  background: var(--bg2); border-radius: 2px; margin: 8px auto 20px;
+}
+
+.edit-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.icon-btn {
+  width: 34px; height: 34px; border-radius: 50%; border: none;
+  background: var(--bg2); color: var(--text2); font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.edit-name-input {
+  flex: 1; background: var(--bg2); border: none; border-radius: var(--radius-xs);
+  padding: 9px 12px; color: var(--text); font-size: 17px; font-weight: 600; outline: none;
+}
+.edit-name-input:focus { background: var(--bg); box-shadow: 0 0 0 2px var(--bg2); }
+
+#physics-container {
+  width: 100%; background: var(--card); border-radius: var(--radius);
+  overflow: hidden; box-shadow: var(--shadow-card);
+  height: calc(100dvh - 258px); min-height: 220px; max-height: 500px;
+}
+#physics-canvas { display: block; width: 100%; height: 100%; }
+
+#edit-add-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.weight-inline {
+  display: flex; align-items: center;
+  background: var(--bg2); border-radius: var(--radius-xs); overflow: hidden; flex-shrink: 0;
+}
+.w-step {
+  width: 30px; height: 36px; border: none; background: transparent;
+  color: var(--text2); font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.w-step:active { background: var(--sep); }
+.w-step.large { width: 40px; height: 44px; font-size: 22px; }
+#add-w-val, #weight-val {
+  min-width: 26px; text-align: center; font-size: 15px; font-weight: 600; color: var(--text);
+}
+
+.weight-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; padding: 14px 0;
+  border-top: 1px solid var(--sep); border-bottom: 1px solid var(--sep);
+}
+.weight-title { font-size: 16px; font-weight: 500; }
+.weight-stepper {
+  display: flex; align-items: center; background: var(--bg2);
+  border-radius: var(--radius-xs); overflow: hidden;
+}
+.term-name-input {
+  width: 100%; background: var(--bg); border: none; border-radius: var(--radius-xs);
+  padding: 10px 12px; color: var(--text); font-size: 17px; font-weight: 600;
+  outline: none; margin-bottom: 16px;
+}
+.term-name-input:focus { background: var(--bg2); }
+.danger-btn { color: var(--accent) !important; margin-top: 6px; text-align: center; width: 100%; }
+
+.pool-edit-btn { width: 30px; height: 30px; flex-shrink: 0; }
+
+.hidden { display: none !important; }
+
+@media (min-width: 768px) {
+  body {
+    max-width: none;
+    overflow-x: hidden;
+  }
+
+  #app {
+    display: flex;
+    max-width: 1100px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    padding-bottom: 0 !important;
+    background: var(--bg);
+  }
+
+  #screens {
+    width: 340px;
+    min-width: 340px;
+    flex-shrink: 0;
+    background: var(--card);
+    border-right: 0.5px solid var(--sep);
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    overflow-y: auto;
+    padding-bottom: 0 !important;
+    box-shadow: 2px 0 20px rgba(0,0,0,0.04);
+  }
+
+  .screen { flex-shrink: 0; }
+
+  #board-panel {
+    flex: 1;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    min-height: 100dvh;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  #board-wrap {
+    width: 100%;
+    max-width: 520px;
+    padding: 0 !important;
+  }
+
+  #bottom-nav {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-top: 0.5px solid rgba(60,60,67,0.2);
+    border-right: none;
+    z-index: 10;
+    margin-top: auto;
+  }
+
+  #screen-bingo.active {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .cell-txt {
+    font-size: clamp(9px, 1.4vw, 13px);
+  }
+
+  #screen-history {
+    padding-bottom: 24px;
+  }
+}
+  </style>
+</head>
+<body>
+  <div id="app">
+
+    <div id="screens">
+
+      <!-- Setup -->
+      <div id="screen-setup" class="screen active">
+        <div class="screen-header">
+          <h1>今天的 Bingo</h1>
+          <p class="subtitle">告诉我今天你想完成什么</p>
+        </div>
+        <div class="card">
+          <div class="section-label">棋盘大小</div>
+          <div class="size-selector">
+            <button class="size-btn" data-size="4">4×4</button>
+            <button class="size-btn active" data-size="5">5×5</button>
+            <button class="size-btn" data-size="6">6×6</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-label">今天的大事（1–3 件）</div>
+          <div id="task-inputs">
+            <div class="task-row">
+              <span class="task-num">1</span>
+              <input type="text" class="task-input" placeholder="今天最重要的一件事" maxlength="16">
+            </div>
+          </div>
+          <button id="add-task-btn" class="text-btn">＋ 再加一件</button>
+        </div>
+        <button id="generate-btn" class="primary-btn">生成今日 Bingo →</button>
+      </div>
+
+      <!-- Bingo controls -->
+      <div id="screen-bingo" class="screen">
+        <div id="big-tasks-header">
+          <div id="big-tasks-list"></div>
+        </div>
+        <div id="tier-bar"><div id="tier-fill"></div></div>
+        <div id="tier-label"></div>
+        <div id="unlock-banner" class="banner hidden"></div>
+      </div>
+
+      <!-- History -->
+      <div id="screen-history" class="screen">
+        <div class="screen-header"><h2>历史记录</h2></div>
+        <div id="streak-box">
+          <span id="streak-num">0</span>
+          <span id="streak-label">连续天数</span>
+        </div>
+        <div id="heatmap-container">
+          <div id="heatmap-months"></div>
+          <div id="heatmap-wrap">
+            <div id="heatmap-dow">
+              <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+            </div>
+            <div id="heatmap-grid"></div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="ldot t0"></span>未开始</div>
+          <div class="legend-item"><span class="ldot t1"></span>完成大事</div>
+          <div class="legend-item"><span class="ldot t2"></span>普通 Bingo</div>
+          <div class="legend-item"><span class="ldot t3"></span>大事 Bingo</div>
+          <div class="legend-item"><span class="ldot t4"></span>全完成</div>
+        </div>
+        <div class="mock-row">
+          <button id="mock-data-btn" class="text-btn mock-btn">⚙ 生成模拟数据</button>
+          <button id="clear-mock-btn" class="text-btn mock-btn clear-btn">✕ 清除模拟数据</button>
+        </div>
+      </div>
+
+      <!-- Pools -->
+      <div id="screen-pools" class="screen">
+        <div class="card" id="ratio-card">
+          <div class="section-label">抽取配比</div>
+          <div id="ratio-rows"></div>
+        </div>
+        <div id="pools-list"></div>
+      </div>
+
+      <!-- Pool Edit -->
+      <div id="screen-pool-edit" class="screen">
+        <div class="edit-header">
+          <button id="edit-back-btn" class="icon-btn">←</button>
+          <input id="edit-pool-name" type="text" class="edit-name-input" maxlength="12">
+        </div>
+        <div id="physics-container">
+          <canvas id="physics-canvas"></canvas>
+        </div>
+        <div id="edit-add-row">
+          <input id="edit-term-input" type="text" class="add-input" placeholder="新词条" maxlength="16">
+          <div class="weight-inline">
+            <button class="w-step" id="add-w-minus">−</button>
+            <span id="add-w-val">1</span>
+            <button class="w-step" id="add-w-plus">＋</button>
+          </div>
+          <button id="edit-add-btn" class="add-btn">加入</button>
+        </div>
+      </div>
+
+      <nav id="bottom-nav">
+        <button class="nav-btn active" data-screen="bingo">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="1" y="1" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="12" y="1" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="1" y="12" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="12" y="12" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span>Bingo</span>
+        </button>
+        <button class="nav-btn" data-screen="history">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="1" y="3" width="20" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M7 1v4M15 1v4M1 9h20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>历史</span>
+        </button>
+        <button class="nav-btn" data-screen="pools">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M11 7v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>词条池</span>
+        </button>
+      </nav>
+    </div>
+
+    <div id="board-panel" class="hidden">
+      <div id="board-wrap">
+        <div id="bingo-board"></div>
+      </div>
+      <div id="board-empty">
+        今日的 Bingo 棋盘<br>将在这里显示
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Term edit sheet -->
+  <div id="term-edit-sheet" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-sheet">
+      <input id="term-edit-label" type="text" class="term-name-input" maxlength="20">
+      <div class="weight-row">
+        <span class="weight-title">权重</span>
+        <div class="weight-stepper">
+          <button class="w-step large" id="weight-minus">−</button>
+          <span id="weight-val">1</span>
+          <button class="w-step large" id="weight-plus">＋</button>
+        </div>
+      </div>
+      <button id="term-save-btn" class="primary-btn">保存</button>
+      <button id="term-delete-btn" class="text-btn danger-btn">删除这个词条</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script>
+'use strict';
+
+const DEFAULT_TERMS = [
+  '分心之后成功在五分钟内转回注意力',
+  '喝完了一整杯水',
+  '按时吃饭',
+  '完成了一件拖延已久的小事',
+  '记得按时吃药',
+  '把手机放到另一个房间专注工作',
+  '用番茄钟完成了一个25分钟',
+  '发现自己走神后主动拉回来',
+  '今天没有开启新坑',
+  '整理了桌面或一个抽屉',
+  '及时回复了一条重要消息',
+  '做了五分钟拉伸或运动',
+  '写下了一个困扰已久的想法',
+  '成功拒绝了一个不重要的请求',
+  '睡前把明天要用的东西准备好了',
+  '感到过载时主动休息了',
+  '把一件大事拆成了小步骤',
+  '今天提前出门了',
+  '做了一件两分钟就能做完的事',
+  '洗了澡',
+  '手机充上了电',
+  '记录了今天的支出',
+  '没有在睡前刷手机超过30分钟',
+  '完成了一封邮件或消息的草稿',
+  '专注了超过45分钟没有查手机',
+  '把垃圾或脏衣服处理掉了',
+  '今天说出了我需要帮助',
+  '运动了10分钟以上',
+  '做了一件一直想做但一直没做的小事',
+  '思维风暴时写下了所有想法',
+  '出门前检查了钥匙钱包手机',
+  '设置了一个提醒而不是靠记忆',
+  '完成了一件超出预期的事',
+  '今天和朋友或家人联系了',
+  '把重要的事写进了日历',
+  '好好做饭或认真吃了一顿饭',
+  '睡够了7小时',
+  '关掉了不必要的通知',
+  '精力充沛时抓住机会完成了重要事项',
+  '把犯错的自责转化成了下次的计划',
+  '今天没有过度道歉',
+  '对自己的一个进步感到骄傲',
+  '感到焦虑时用了一个应对方法',
+  '把脑子里的事清空写成了清单',
+  '今天准时开始了一件事',
+  '完成一件事后给自己休息时间',
+  '今天允许自己做了一件纯粹娱乐的事',
+  '完成了昨天没做完的一件事',
+  '花时间照顾了自己的身体或情绪',
+  '今天对一件事保持了好奇心',
+];
+
+function blankState() {
+  return {
+    today: null,
+    history: [],
+    totalBTB: 0,
+    pools: {
+      default: [...DEFAULT_TERMS],
+      custom: [
+        { name: '自定义池 1', terms: [], unlocked: false },
+        { name: '自定义池 2', terms: [], unlocked: false },
+        { name: '自定义池 3', terms: [], unlocked: false },
+        { name: '自定义池 4', terms: [], unlocked: false },
+      ],
+    },
+    poolAllocations: [0, 0, 0, 0],
+    poolOrder: [0, 1, 2, 3],
+  };
+}
+
+let S = blankState();
+let activeScreen = 'setup';
+let pendingCell = null;
+
+function load() {
+  try {
+    const raw = localStorage.getItem('adhd-bingo');
+    if (raw) S = Object.assign(blankState(), JSON.parse(raw));
+  } catch (_) {}
+}
+
+function save() {
+  try { localStorage.setItem('adhd-bingo', JSON.stringify(S)); } catch (_) {}
+}
+
+function localDateStr(date) {
+  const d = (date instanceof Date) ? date : new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function todayStr() {
+  return localDateStr(new Date());
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function allLines(n) {
+  const lines = [];
+  for (let i = 0; i < n; i++) {
+    const row = [], col = [];
+    for (let j = 0; j < n; j++) { row.push(i * n + j); col.push(j * n + i); }
+    lines.push(row, col);
+  }
+  const d1 = [], d2 = [];
+  for (let i = 0; i < n; i++) { d1.push(i * n + i); d2.push(i * n + (n - 1 - i)); }
+  lines.push(d1, d2);
+  return lines;
+}
+
+function findBigTaskPositions(count, n) {
+  for (let attempt = 0; attempt < 600; attempt++) {
+    const candidates = shuffle(Array.from({ length: n * n }, (_, i) => i));
+    const chosen = [];
+    for (const pos of candidates) {
+      if (chosen.length === count) break;
+      const r = Math.floor(pos / n), c = pos % n;
+      const ok = chosen.every(p => {
+        const pr = Math.floor(p / n), pc = p % n;
+        return pr !== r && pc !== c && (pr - pc) !== (r - c) && (pr + pc) !== (r + c);
+      });
+      if (ok) chosen.push(pos);
+    }
+    if (chosen.length === count) return chosen;
+  }
+  return shuffle(Array.from({ length: n * n }, (_, i) => i)).slice(0, count);
+}
+
+function termText(t) { return typeof t === 'string' ? t : t.text; }
+
+function sampleTerms(needed) {
+  const used = new Set();
+  const result = [];
+  const order = S.poolOrder || [0, 1, 2, 3];
+  const allocs = S.poolAllocations || [0, 0, 0, 0];
+
+  for (const idx of order) {
+    const pool = S.pools.custom[idx];
+    if (!pool?.unlocked || !pool.terms.length) continue;
+    const count = Math.min(allocs[idx] || 0, pool.terms.length);
+    if (count === 0) continue;
+    const shuffled = shuffle([...pool.terms]);
+    let added = 0;
+    for (const raw of shuffled) {
+      if (added >= count) break;
+      const t = termText(raw);
+      if (!used.has(t)) { result.push(t); used.add(t); added++; }
+    }
+  }
+
+  for (const raw of shuffle([...S.pools.default])) {
+    if (result.length >= needed) break;
+    const t = termText(raw);
+    if (!used.has(t)) { result.push(t); used.add(t); }
+  }
+
+  if (result.length < needed) {
+    for (const raw of S.pools.default) {
+      if (result.length >= needed) break;
+      result.push(termText(raw));
+    }
+  }
+
+  return shuffle(result);
+}
+
+function generateBoard(bigTasks, n) {
+  const total = n * n;
+  const btPositions = findBigTaskPositions(bigTasks.length, n);
+  const btSet = new Set(btPositions);
+  const randomTerms = sampleTerms(total - bigTasks.length);
+
+  const board = Array.from({ length: total }, () => ({
+    text: '', weight: 2, isBigTask: false, bigTaskIdx: null, completed: false,
+  }));
+
+  btPositions.forEach((pos, i) => {
+    board[pos] = { text: bigTasks[i], weight: 3, isBigTask: true, bigTaskIdx: i, completed: false };
+  });
+
+  let ri = 0;
+  for (let i = 0; i < total; i++) {
+    if (!btSet.has(i)) {
+      board[i] = { text: randomTerms[ri++] ?? '待添加', weight: 2, isBigTask: false, bigTaskIdx: null, completed: false };
+    }
+  }
+
+  return { board, btPositions };
+}
+
+function completedLines(board, n) {
+  const done = new Set(board.map((c, i) => c.completed ? i : -1).filter(i => i >= 0));
+  return allLines(n).filter(line => line.every(i => done.has(i)));
+}
+
+function detectTier(board, n, btPositions) {
+  const lines = completedLines(board, n);
+  const btSet = new Set(btPositions);
+
+  const allBTDone = btPositions.every(i => board[i].completed);
+  const anyLine = lines.length > 0;
+  const btBingoLines = lines.filter(l => l.some(i => btSet.has(i)));
+  const allBTHaveLine = btPositions.length > 0 &&
+    btPositions.every(btp => lines.some(l => l.includes(btp)));
+
+  if (allBTHaveLine) return 4;
+  if (btBingoLines.length > 0) return 3;
+  if (anyLine) return 2;
+  if (allBTDone) return 1;
+  return 0;
+}
+
+const TIER_LABELS = ['', '完成了今天的大事 ✓', '普通 Bingo！', '大事 Bingo！', '🎉 大事全 Bingo！'];
+
+function checkUnlocks() {
+  if (!S.today) return;
+  const { board, n, btPositions } = S.today;
+
+  const lines = completedLines(board, n);
+  const btSet = new Set(btPositions);
+  const btbCount = lines.filter(l => l.some(i => btSet.has(i))).length;
+
+  const prevBTB = S.today.btbSnapshot ?? 0;
+  const newBTB = Math.max(0, btbCount - prevBTB);
+  if (newBTB > 0) {
+    S.today.btbSnapshot = btbCount;
+    S.totalBTB = (S.totalBTB ?? 0) + newBTB;
+  }
+
+  const anyBingo = lines.length > 0;
+  let unlocked = false;
+
+  if (anyBingo && !S.pools.custom[0].unlocked) {
+    doUnlock(0); unlocked = true;
+  }
+  [1, 2, 3].forEach((threshold, i) => {
+    if ((S.totalBTB ?? 0) >= threshold && !S.pools.custom[i + 1].unlocked) {
+      doUnlock(i + 1); unlocked = true;
+    }
+  });
+
+  if (newBTB > 0 || unlocked) save();
+}
+
+function doUnlock(customIdx) {
+  S.pools.custom[customIdx].unlocked = true;
+  if (!S.poolAllocations) S.poolAllocations = [0, 0, 0, 0];
+  showBanner(`🎉 ${S.pools.custom[customIdx].name} 已解锁！去词条池添加专属词条`);
+}
+
+function showBanner(msg) {
+  const el = document.getElementById('unlock-banner');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(showBanner._timer);
+  showBanner._timer = setTimeout(() => el.classList.add('hidden'), 4000);
+}
+
+function recordToday() {
+  if (!S.today) return;
+  const tier = detectTier(S.today.board, S.today.n, S.today.btPositions);
+  const idx = S.history.findIndex(h => h.date === S.today.date);
+  const rec = { date: S.today.date, tier };
+  if (idx >= 0) S.history[idx] = rec; else S.history.push(rec);
+  save();
+}
+
+function archiveYesterday() {
+  if (S.today && S.today.date !== todayStr()) {
+    recordToday();
+    S.today = null;
+    save();
+  }
+}
+
+function initSetup() {
+  document.querySelectorAll('.size-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  document.getElementById('add-task-btn').addEventListener('click', () => {
+    const rows = document.querySelectorAll('#task-inputs .task-row');
+    if (rows.length >= 3) return;
+    const idx = rows.length;
+    const row = document.createElement('div');
+    row.className = 'task-row';
+    row.innerHTML = `
+      <span class="task-num">${idx + 1}</span>
+      <input type="text" class="task-input" placeholder="第${idx + 1}件大事" maxlength="16">
+      <button class="remove-task-btn" aria-label="删除">×</button>`;
+    row.querySelector('.remove-task-btn').addEventListener('click', () => {
+      row.remove();
+      renumberTasks();
+      document.getElementById('add-task-btn').style.display = '';
+    });
+    document.getElementById('task-inputs').appendChild(row);
+    if (rows.length + 1 >= 3) document.getElementById('add-task-btn').style.display = 'none';
+    row.querySelector('input').focus();
+  });
+
+  document.getElementById('generate-btn').addEventListener('click', () => {
+    const tasks = Array.from(document.querySelectorAll('.task-input'))
+      .map(i => i.value.trim()).filter(Boolean);
+    if (tasks.length === 0) { alert('请至少输入一件大事'); return; }
+    const n = parseInt(document.querySelector('.size-btn.active').dataset.size);
+    const { board, btPositions } = generateBoard(tasks, n);
+    S.today = { date: todayStr(), n, bigTasks: tasks, board, btPositions, btbSnapshot: 0 };
+    save();
+    showScreen('bingo');
+    renderBingo();
+  });
+}
+
+function renumberTasks() {
+  document.querySelectorAll('#task-inputs .task-row').forEach((row, i) => {
+    row.querySelector('.task-num').textContent = i + 1;
+  });
+}
+
+function renderBigTasks() {
+  const { bigTasks, board, btPositions } = S.today;
+  const el = document.getElementById('big-tasks-list');
+  el.innerHTML = '';
+  bigTasks.forEach((task, i) => {
+    const pos = btPositions[i];
+    const done = board[pos].completed;
+    const item = document.createElement('div');
+    item.className = 'bt-item' + (done ? ' done' : '');
+    item.innerHTML = `<div class="bt-check">${done ? '✓' : ''}</div><span class="bt-text">${task}</span>`;
+    item.addEventListener('click', () => {
+      board[pos].completed = !board[pos].completed;
+      recordToday();
+      checkUnlocks();
+      renderBingo();
+    });
+    el.appendChild(item);
+  });
+}
+
+function renderBoard() {
+  const { board, n } = S.today;
+  const el = document.getElementById('bingo-board');
+  el.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  el.style.gridTemplateRows = `repeat(${n}, 1fr)`;
+  el.innerHTML = '';
+
+  const cLines = completedLines(board, n);
+  const bingoCells = new Set(cLines.flat());
+
+  board.forEach((cell, i) => {
+    const div = document.createElement('div');
+    div.className = 'cell';
+    if (cell.isBigTask) div.classList.add('big');
+    if (cell.completed && bingoCells.has(i)) div.classList.add('bingo-hi');
+    else if (cell.completed) div.classList.add('done');
+    div.innerHTML = `<span class="cell-txt">${cell.text}</span>`;
+    div.addEventListener('click', () => {
+      S.today.board[i].completed = !S.today.board[i].completed;
+      recordToday();
+      checkUnlocks();
+      renderBingo();
+    });
+    el.appendChild(div);
+  });
+}
+
+function renderTier() {
+  const { board, n, btPositions } = S.today;
+  const tier = detectTier(board, n, btPositions);
+  document.getElementById('tier-fill').style.width = `${(tier / 4) * 100}%`;
+  document.getElementById('tier-label').textContent = TIER_LABELS[tier] ?? '';
+}
+
+function renderBingo() {
+  if (!S.today) return;
+  renderBigTasks();
+  renderBoard();
+  renderTier();
+}
+
+const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+function renderHistory() {
+  const histMap = {};
+  S.history.forEach(h => { histMap[h.date] = h.tier; });
+  if (S.today) {
+    const t = detectTier(S.today.board, S.today.n, S.today.btPositions);
+    histMap[S.today.date] = t;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const todayDow = today.getDay();
+  const toThisMonday = todayDow === 0 ? 6 : todayDow - 1;
+  const start = new Date(today);
+  start.setDate(start.getDate() - toThisMonday - 12 * 7);
+  const numWeeks = 13;
+
+  const monthsEl = document.getElementById('heatmap-months');
+  monthsEl.innerHTML = '';
+  for (let w = 0; w < numWeeks; w++) {
+    const col = document.createElement('div');
+    col.className = 'hm-month-col';
+    let label = '';
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(start);
+      day.setDate(start.getDate() + w * 7 + d);
+      if (day.getDate() === 1) {
+        label = MONTH_NAMES[day.getMonth()];
+        break;
+      }
+    }
+    col.textContent = label;
+    monthsEl.appendChild(col);
+  }
+
+  const grid = document.getElementById('heatmap-grid');
+  grid.innerHTML = '';
+
+  for (let w = 0; w < numWeeks; w++) {
+    const week = document.createElement('div');
+    week.className = 'hm-week';
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + w * 7 + d);
+      const ds = localDateStr(date);
+      const tier = histMap[ds];
+      const isFuture = date > today;
+
+      const cell = document.createElement('div');
+      let cls = 'hm-cell';
+      if (tier != null) cls += ` t${tier}`;
+      if (isFuture) cls += ' future';
+      cell.className = cls;
+      cell.title = ds + (tier != null ? ` · 等级 ${tier}` : '');
+      week.appendChild(cell);
+    }
+    grid.appendChild(week);
+  }
+
+  let streak = 0;
+  const cur = new Date(today);
+  while (true) {
+    const ds = localDateStr(cur);
+    if ((histMap[ds] ?? 0) > 0) { streak++; cur.setDate(cur.getDate() - 1); }
+    else break;
+  }
+  document.getElementById('streak-num').textContent = streak;
+}
+
+function clearMockHistory() {
+  S.history = S.history.filter(h => !h._mock);
+  save();
+  renderHistory();
+}
+
+function generateMockHistory() {
+  const probs = [0.12, 0.18, 0.28, 0.28, 0.14];
+  const today = new Date();
+  for (let i = 89; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const ds = localDateStr(d);
+    if (Math.random() < 0.2) continue;
+    let tier = 0;
+    let cumulative = 0;
+    const rand = Math.random();
+    for (let t = 0; t < 5; t++) {
+      cumulative += probs[t];
+      if (rand < cumulative) { tier = t; break; }
+    }
+    const existing = S.history.findIndex(h => h.date === ds);
+    if (existing >= 0) S.history[existing] = { date: ds, tier, _mock: true };
+    else S.history.push({ date: ds, tier, _mock: true });
+  }
+  save();
+  renderHistory();
+}
+
+function renderPools() {
+  renderRatios();
+  renderPoolCards();
+}
+
+function totalRandomCells() {
+  if (!S.today) return 20;
+  return S.today.n ** 2 - S.today.bigTasks.length;
+}
+
+function renderRatios() {
+  const container = document.getElementById('ratio-rows');
+  container.innerHTML = '';
+  const cells = totalRandomCells();
+  const order = S.poolOrder || [0, 1, 2, 3];
+  const allocs = S.poolAllocations || [0, 0, 0, 0];
+
+  const customTotal = order.reduce((s, i) =>
+    s + (S.pools.custom[i]?.unlocked ? (allocs[i] || 0) : 0), 0);
+  const defaultCount = Math.max(0, cells - customTotal);
+
+  const defRow = document.createElement('div');
+  defRow.className = 'alloc-row';
+  defRow.innerHTML = `
+    <span class="alloc-name">默认池</span>
+    <span class="alloc-auto" id="alloc-default">${defaultCount} 个</span>`;
+  container.appendChild(defRow);
+
+  order.forEach(idx => {
+    const pool = S.pools.custom[idx];
+    if (!pool?.unlocked) return;
+    const alloc = allocs[idx] || 0;
+
+    const row = document.createElement('div');
+    row.className = 'alloc-row';
+    row.innerHTML = `
+      <span class="alloc-name">${pool.name}</span>
+      <div class="alloc-ctrl">
+        <button class="alloc-btn" id="aminus-${idx}">−</button>
+        <span class="alloc-num" id="anum-${idx}">${alloc}</span>
+        <button class="alloc-btn" id="aplus-${idx}">＋</button>
+      </div>`;
+
+    const minusBtn = row.querySelector(`#aminus-${idx}`);
+    const plusBtn  = row.querySelector(`#aplus-${idx}`);
+
+    const otherAlloc = order.reduce((s, i) =>
+      (S.pools.custom[i]?.unlocked && i !== idx) ? s + (allocs[i] || 0) : s, 0);
+    const maxAlloc = Math.min(pool.terms.length, Math.max(0, cells - otherAlloc));
+
+    if (alloc <= 0) minusBtn.disabled = true;
+    if (alloc >= maxAlloc) plusBtn.disabled = true;
+
+    minusBtn.addEventListener('click', () => {
+      S.poolAllocations[idx] = Math.max(0, (S.poolAllocations[idx] || 0) - 1);
+      save(); renderRatios();
+    });
+    plusBtn.addEventListener('click', () => {
+      const cur = S.poolAllocations[idx] || 0;
+      const otherNow = order.reduce((s, i) =>
+        (S.pools.custom[i]?.unlocked && i !== idx) ? s + (S.poolAllocations[i] || 0) : s, 0);
+      const max = Math.min(pool.terms.length, Math.max(0, cells - otherNow));
+      if (cur < max) { S.poolAllocations[idx] = cur + 1; save(); renderRatios(); }
+    });
+
+    container.appendChild(row);
+  });
+}
+
+let _drag = null;
+
+function initPoolDrag() {
+  document.addEventListener('pointermove', onPoolDragMove, { passive: false });
+  document.addEventListener('pointerup', onPoolDragEnd);
+  document.addEventListener('pointercancel', onPoolDragEnd);
+}
+
+function onPoolDragStart(e, card, ci) {
+  e.preventDefault();
+  const rect = card.getBoundingClientRect();
+  _drag = {
+    ci, card,
+    startY: e.clientY,
+    cardMidY: rect.top + rect.height / 2,
+    cardH: rect.height,
+    target: null,
+  };
+  card.classList.add('dragging');
+}
+
+function onPoolDragMove(e) {
+  if (!_drag) return;
+  e.preventDefault();
+
+  const dy = e.clientY - _drag.startY;
+  _drag.card.style.transform = `translateY(${dy}px)`;
+
+  const cards = [...document.querySelectorAll('#pools-list .pool-card[data-ci]')]
+    .filter(c => c !== _drag.card);
+
+  let target = null;
+  const dragMidY = _drag.cardMidY + dy;
+
+  cards.forEach(c => {
+    c.classList.remove('drag-over');
+    const r = c.getBoundingClientRect();
+    if (dragMidY >= r.top && dragMidY <= r.bottom) target = c;
+  });
+
+  if (target) target.classList.add('drag-over');
+  _drag.target = target;
+}
+
+function onPoolDragEnd() {
+  if (!_drag) return;
+  const { ci, card, target } = _drag;
+
+  card.style.transform = '';
+  card.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+
+  if (target) {
+    const targetCI = parseInt(target.dataset.ci);
+    const order = S.poolOrder;
+    const fromPos = order.indexOf(ci);
+    const toPos = order.indexOf(targetCI);
+    if (fromPos !== toPos) {
+      order.splice(fromPos, 1);
+      order.splice(toPos, 0, ci);
+      save();
+      renderPools();
+    }
+  }
+
+  _drag = null;
+}
+
+function renderPoolCards() {
+  const container = document.getElementById('pools-list');
+  container.innerHTML = '';
+
+  buildPoolCard(container, {
+    id: 'p0', title: '默认词条池', terms: S.pools.default,
+    locked: false, readonly: true,
+  });
+
+  (S.poolOrder || [0, 1, 2, 3]).forEach(idx => {
+    const pool = S.pools.custom[idx];
+    buildPoolCard(container, {
+      id: `p${idx + 1}`, title: pool.name, terms: pool.terms,
+      locked: !pool.unlocked, readonly: false, customIdx: idx,
+    });
+  });
+}
+
+function buildPoolCard(container, { id, title, terms, locked, readonly, customIdx }) {
+  const card = document.createElement('div');
+  card.className = 'pool-card';
+  if (customIdx !== undefined) card.dataset.ci = customIdx;
+
+  const badge = locked
+    ? '<span class="pool-badge locked">🔒 未解锁</span>'
+    : `<span class="pool-badge">${terms.length}/50</span>`;
+
+  const editBtn = (!locked && !readonly)
+    ? `<button class="icon-btn pool-edit-btn" aria-label="编辑" style="width:30px;height:30px;flex-shrink:0;">
+         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+           <path d="M10 1.5L12.5 4L4.5 12H2V9.5L10 1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+           <path d="M8.5 3L11 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+         </svg>
+       </button>`
+    : '';
+
+  const dragHandle = (customIdx !== undefined)
+    ? `<span class="drag-handle" aria-label="拖动排序">⠿</span>`
+    : '';
+
+  card.innerHTML = `
+    <div class="pool-head" id="ph-${id}">
+      <div class="pool-head-left">${title}${badge}</div>
+      <div class="pool-head-right">
+        ${dragHandle}
+        ${editBtn}
+        <span class="pool-chevron" id="chev-${id}">▼</span>
+      </div>
+    </div>
+    <div class="pool-body" id="pb-${id}"></div>`;
+
+  const head = card.querySelector(`#ph-${id}`);
+  const body = card.querySelector(`#pb-${id}`);
+  const chev = card.querySelector(`#chev-${id}`);
+
+  if (!locked && !readonly) {
+    card.querySelector('.pool-edit-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      enterPoolEdit(customIdx);
+    });
+  }
+
+  const handle = card.querySelector('.drag-handle');
+  if (handle) {
+    handle.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      onPoolDragStart(e, card, customIdx);
+    });
+  }
+
+  head.addEventListener('click', () => {
+    body.classList.toggle('open');
+    chev.classList.toggle('open');
+    if (body.classList.contains('open')) populatePoolBody(body, { locked, readonly, terms, customIdx, id });
+  });
+
+  container.appendChild(card);
+}
+
+function populatePoolBody(body, { locked, readonly, terms, customIdx }) {
+  body.innerHTML = '';
+
+  if (locked) {
+    const msg = customIdx === 0
+      ? '完成第一次 Bingo 即可解锁'
+      : `累计完成 ${customIdx} 次大事 Bingo 即可解锁`;
+    body.innerHTML = `<div class="pool-locked-msg">${msg}</div>`;
+    return;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'terms-wrap';
+  const preview = terms.slice(0, 12);
+  preview.forEach(raw => {
+    const chip = document.createElement('div');
+    chip.className = 'term-chip';
+    chip.textContent = termText(raw);
+    wrap.appendChild(chip);
+  });
+  if (terms.length > 12) {
+    const more = document.createElement('div');
+    more.className = 'term-chip';
+    more.style.color = 'var(--muted)';
+    more.textContent = `+${terms.length - 12} 个`;
+    wrap.appendChild(more);
+  }
+  body.appendChild(wrap);
+
+  if (!readonly) {
+    const hint = document.createElement('p');
+    hint.style.cssText = 'font-size:12px;color:var(--muted);margin-top:8px;';
+    hint.textContent = '点击「编辑」按钮进入完整编辑页面';
+    body.appendChild(hint);
+  }
+}
+
+function updateBoardPlaceholder() {
+  const hasBoard = !!(S.today && S.today.date === todayStr());
+  document.getElementById('board-wrap').classList.toggle('hidden', !hasBoard);
+  document.getElementById('board-empty').classList.toggle('hidden', hasBoard);
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  const noBoard = !S.today || S.today.date !== todayStr();
+  const boardPanel = document.getElementById('board-panel');
+
+  if (name === 'bingo' && noBoard) {
+    document.getElementById('screen-setup').classList.add('active');
+    boardPanel.classList.add('hidden');
+  } else if (name === 'bingo') {
+    document.getElementById('screen-bingo').classList.add('active');
+    boardPanel.classList.remove('hidden');
+  } else {
+    document.getElementById(`screen-${name}`).classList.add('active');
+    boardPanel.classList.add('hidden');
+  }
+
+  updateBoardPlaceholder();
+  document.querySelector(`.nav-btn[data-screen="${name}"]`)?.classList.add('active');
+  activeScreen = name;
+}
+
+function initNav() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const s = btn.dataset.screen;
+      showScreen(s);
+      if (s === 'history') renderHistory();
+      if (s === 'pools') renderPools();
+    });
+  });
+}
+
+let editingPoolIdx = null;
+let physicsEngine = null;
+let physicsRafId = null;
+let physicsTermBodies = [];
+let editingTermBody = null;
+let addWeight = 1;
+
+function enterPoolEdit(customIdx) {
+  editingPoolIdx = customIdx;
+  addWeight = 1;
+  document.getElementById('add-w-val').textContent = '1';
+
+  const pool = S.pools.custom[customIdx];
+  document.getElementById('edit-pool-name').value = pool.name;
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-pool-edit').classList.add('active');
+  document.getElementById('board-panel').classList.add('hidden');
+  document.getElementById('bottom-nav').style.display = 'none';
+
+  requestAnimationFrame(() => requestAnimationFrame(() => setupPhysics()));
+}
+
+function exitPoolEdit() {
+  const name = document.getElementById('edit-pool-name').value.trim();
+  if (name) S.pools.custom[editingPoolIdx].name = name;
+  save();
+
+  teardownPhysics();
+  document.getElementById('bottom-nav').style.display = '';
+  editingPoolIdx = null;
+  showScreen('pools');
+  renderPools();
+}
+
+function teardownPhysics() {
+  if (physicsRafId) { cancelAnimationFrame(physicsRafId); physicsRafId = null; }
+  if (physicsEngine) { Matter.Engine.clear(physicsEngine); physicsEngine = null; }
+  physicsTermBodies = [];
+  const canvas = document.getElementById('physics-canvas');
+  canvas.removeEventListener('click', onCanvasClick);
+}
+
+function setupPhysics() {
+  teardownPhysics();
+
+  const container = document.getElementById('physics-container');
+  const W = container.offsetWidth;
+  const H = container.offsetHeight;
+  const dpr = window.devicePixelRatio || 1;
+  const canvas = document.getElementById('physics-canvas');
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  physicsEngine = Matter.Engine.create({ gravity: { y: 1.5 } });
+  const world = physicsEngine.world;
+
+  const thick = 60;
+  Matter.Composite.add(world, [
+    Matter.Bodies.rectangle(W / 2, H + thick / 2, W + 100, thick, { isStatic: true }),
+    Matter.Bodies.rectangle(-thick / 2, H / 2, thick, H * 3, { isStatic: true }),
+    Matter.Bodies.rectangle(W + thick / 2, H / 2, thick, H * 3, { isStatic: true }),
+  ]);
+
+  addBodies(S.pools.custom[editingPoolIdx].terms, W);
+
+  let last = performance.now();
+  function loop(now) {
+    const delta = Math.min(now - last, 48);
+    last = now;
+    Matter.Engine.update(physicsEngine, delta);
+    drawFrame(ctx, W, H);
+    physicsRafId = requestAnimationFrame(loop);
+  }
+  physicsRafId = requestAnimationFrame(loop);
+
+  canvas.addEventListener('click', onCanvasClick);
+}
+
+const WEIGHT_RADIUS = { 1: 24, 2: 36, 3: 48 };
+function calcRadius(weight) {
+  return WEIGHT_RADIUS[Math.min(Math.max(weight, 1), 3)] ?? 24;
+}
+
+const CIRCLE_PALETTE = [
+  '#6B8CAE', '#7FAE8A', '#AE9B6B', '#9B7BAE',
+  '#AE7B7B', '#6BAEAD', '#8AAE7F', '#AE8A6B',
+  '#7B8BAE', '#AE6B8C', '#8BAE6B', '#6B9BAE',
+];
+function randomCircleColor() {
+  return CIRCLE_PALETTE[Math.floor(Math.random() * CIRCLE_PALETTE.length)];
+}
+
+function addBodies(terms, W) {
+  terms.forEach((term, idx) => {
+    const r = calcRadius(term.weight);
+    const x = r + Math.random() * Math.max(0, W - 2 * r);
+    const body = Matter.Bodies.circle(x, -r - Math.random() * 120, r, {
+      restitution: 0.3, friction: 0.55, frictionAir: 0.018, label: term.text,
+    });
+    body.termIdx = idx;
+    body.termColor = randomCircleColor();
+    Matter.Composite.add(physicsEngine.world, body);
+    physicsTermBodies.push({ body, termIdx: idx });
+  });
+}
+
+function drawFrame(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  const bodies = Matter.Composite.allBodies(physicsEngine.world).filter(b => !b.isStatic);
+
+  bodies.forEach(body => {
+    const { x, y } = body.position;
+    const r = body.circleRadius;
+    if (y - r > H + 60) return;
+
+    const color = body.termColor || '#8E8E93';
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.14)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 4;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+
+    const fs = Math.max(8, Math.min(12, r * 0.33));
+    ctx.font = `600 ${fs}px -apple-system,'PingFang SC',sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = wrapText(ctx, body.label, r * 1.55, 3);
+    const lh = fs * 1.38;
+    const sy = y - (lines.length - 1) * lh / 2;
+    lines.forEach((l, i) => ctx.fillText(l, x, sy + i * lh));
+  });
+}
+
+function wrapText(ctx, text, maxW, maxLines) {
+  const lines = [];
+  let line = '';
+  for (const ch of text) {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxW && line) {
+      lines.push(line);
+      if (lines.length >= maxLines) return lines;
+      line = ch;
+    } else line = test;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function onCanvasClick(e) {
+  const canvas = document.getElementById('physics-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const W = parseFloat(canvas.style.width);
+  const H = parseFloat(canvas.style.height);
+  const mx = (e.clientX - rect.left) * (W / rect.width);
+  const my = (e.clientY - rect.top) * (H / rect.height);
+  hitTest(mx, my);
+}
+
+function hitTest(mx, my) {
+  const bodies = Matter.Composite.allBodies(physicsEngine.world).filter(b => !b.isStatic);
+  for (const body of bodies) {
+    const dx = mx - body.position.x, dy = my - body.position.y;
+    if (Math.sqrt(dx * dx + dy * dy) <= body.circleRadius) {
+      openTermEditSheet(body);
+      return;
+    }
+  }
+}
+
+function openTermEditSheet(body) {
+  editingTermBody = body;
+  const term = S.pools.custom[editingPoolIdx].terms[body.termIdx];
+  document.getElementById('term-edit-label').value = term.text;
+  document.getElementById('weight-val').textContent = term.weight;
+  document.getElementById('term-edit-sheet').classList.remove('hidden');
+}
+
+function closeTermEditSheet() {
+  document.getElementById('term-edit-sheet').classList.add('hidden');
+  editingTermBody = null;
+}
+
+function addOneTerm(term, termIdx, W) {
+  if (!physicsEngine) return;
+  const r = calcRadius(term.weight);
+  const x = r + Math.random() * Math.max(0, W - 2 * r);
+  const body = Matter.Bodies.circle(x, -r, r, {
+    restitution: 0.3, friction: 0.55, frictionAir: 0.018, label: term.text,
+  });
+  body.termIdx = termIdx;
+  body.termColor = randomCircleColor();
+  Matter.Composite.add(physicsEngine.world, body);
+  physicsTermBodies.push({ body, termIdx });
+}
+
+function initPoolEdit() {
+  document.getElementById('edit-back-btn').addEventListener('click', exitPoolEdit);
+
+  document.getElementById('edit-pool-name').addEventListener('blur', () => {
+    const name = document.getElementById('edit-pool-name').value.trim();
+    if (name) S.pools.custom[editingPoolIdx].name = name;
+  });
+
+  document.getElementById('add-w-minus').addEventListener('click', () => {
+    if (addWeight > 1) { addWeight--; document.getElementById('add-w-val').textContent = addWeight; }
+  });
+  document.getElementById('add-w-plus').addEventListener('click', () => {
+    if (addWeight < 3) { addWeight++; document.getElementById('add-w-val').textContent = addWeight; }
+  });
+
+  document.getElementById('edit-add-btn').addEventListener('click', () => {
+    const input = document.getElementById('edit-term-input');
+    const text = input.value.trim();
+    if (!text) return;
+    const pool = S.pools.custom[editingPoolIdx];
+    if (pool.terms.length >= 50) return;
+    pool.terms.push({ text, weight: addWeight });
+    save();
+    const newIdx = pool.terms.length - 1;
+    const container = document.getElementById('physics-container');
+    addOneTerm(pool.terms[newIdx], newIdx, container.offsetWidth);
+    input.value = '';
+    addWeight = 1;
+    document.getElementById('add-w-val').textContent = '1';
+  });
+  document.getElementById('edit-term-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('edit-add-btn').click();
+  });
+
+  document.getElementById('weight-minus').addEventListener('click', () => {
+    const v = parseInt(document.getElementById('weight-val').textContent);
+    if (v > 1) document.getElementById('weight-val').textContent = v - 1;
+  });
+  document.getElementById('weight-plus').addEventListener('click', () => {
+    const v = parseInt(document.getElementById('weight-val').textContent);
+    if (v < 3) document.getElementById('weight-val').textContent = v + 1;
+  });
+  document.getElementById('term-save-btn').addEventListener('click', () => {
+    if (!editingTermBody) return;
+    const w = parseInt(document.getElementById('weight-val').textContent);
+    const newText = document.getElementById('term-edit-label').value.trim();
+    const termIdx = editingTermBody.termIdx;
+    const term = S.pools.custom[editingPoolIdx].terms[termIdx];
+    term.weight = w;
+    if (newText) term.text = newText;
+    save();
+    const oldBody = editingTermBody;
+    const { x, y } = oldBody.position;
+    const vel = oldBody.velocity;
+    Matter.Composite.remove(physicsEngine.world, oldBody);
+    const r = calcRadius(w);
+    const newBody = Matter.Bodies.circle(x, y, r, {
+      restitution: 0.3, friction: 0.55, frictionAir: 0.018,
+      label: term.text,
+    });
+    newBody.termIdx = termIdx;
+    newBody.termColor = oldBody.termColor || randomCircleColor();
+    Matter.Body.setVelocity(newBody, vel);
+    Matter.Composite.add(physicsEngine.world, newBody);
+    const tbIdx = physicsTermBodies.findIndex(tb => tb.body === oldBody);
+    if (tbIdx >= 0) physicsTermBodies[tbIdx] = { body: newBody, termIdx };
+    closeTermEditSheet();
+  });
+
+  document.getElementById('term-delete-btn').addEventListener('click', () => {
+    if (!editingTermBody) return;
+    const termIdx = editingTermBody.termIdx;
+    Matter.Composite.remove(physicsEngine.world, editingTermBody);
+    physicsTermBodies = physicsTermBodies.filter(tb => tb.body !== editingTermBody);
+    physicsTermBodies.forEach(tb => {
+      if (tb.body.termIdx > termIdx) {
+        tb.body.termIdx--;
+        tb.termIdx = tb.body.termIdx;
+      }
+    });
+    S.pools.custom[editingPoolIdx].terms.splice(termIdx, 1);
+    save();
+    closeTermEditSheet();
+  });
+  document.querySelector('#term-edit-sheet .modal-overlay').addEventListener('click', closeTermEditSheet);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  load();
+  archiveYesterday();
+  initSetup();
+  initNav();
+  initPoolEdit();
+  initPoolDrag();
+
+  document.getElementById('mock-data-btn').addEventListener('click', generateMockHistory);
+  document.getElementById('clear-mock-btn').addEventListener('click', clearMockHistory);
+
+  if (S.today && S.today.date === todayStr()) {
+    showScreen('bingo');
+    renderBingo();
+  } else {
+    showScreen('bingo');
+  }
+});
+  </script>
+</body>
+</html>

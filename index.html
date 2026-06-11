@@ -72,6 +72,28 @@
           <div class="legend-item"><span class="ldot t3"></span>大事 Bingo</div>
           <div class="legend-item"><span class="ldot t4"></span>全完成</div>
         </div>
+        <div class="card data-card">
+          <div class="section-label">数据管理</div>
+          <div id="file-sync-row" class="data-row hidden">
+            <div class="data-row-info">
+              <span class="data-label">文件自动同步</span>
+              <span id="sync-status" class="sync-status" data-status="disconnected">未连接</span>
+            </div>
+            <div class="data-row-btns">
+              <button id="restore-file-btn" class="outline-btn hidden">从文件恢复</button>
+              <button id="connect-file-btn" class="outline-btn">连接文件</button>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-row-info">
+              <span class="data-label">备份与恢复</span>
+            </div>
+            <div class="data-row-btns">
+              <button id="export-btn" class="outline-btn">导出</button>
+              <label class="outline-btn">导入<input type="file" id="import-input" accept=".json" style="display:none"></label>
+            </div>
+          </div>
+        </div>
         <div class="mock-row">
           <button id="mock-data-btn" class="text-btn mock-btn">⚙ 生成模拟数据</button>
           <button id="clear-mock-btn" class="text-btn mock-btn clear-btn">✕ 清除模拟数据</button>

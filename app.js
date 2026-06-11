@@ -87,8 +87,182 @@ function load() {
   } catch (_) {}
 }
 
+let _writeTimer = null;
 function save() {
   try { localStorage.setItem('adhd-bingo', JSON.stringify(S)); } catch (_) {}
+  clearTimeout(_writeTimer);
+  _writeTimer = setTimeout(writeToFile, 300);
+}
+
+// ── File System Access API (Chrome/Edge) ──────────────────────────────────
+
+let fsFileHandle = null;
+
+function openIDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('adhd-bingo-meta', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('handles');
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+async function persistHandle(handle) {
+  try {
+    const db = await openIDB();
+    const tx = db.transaction('handles', 'readwrite');
+    tx.objectStore('handles').put(handle, 'save');
+  } catch (_) {}
+}
+
+async function retrieveHandle() {
+  try {
+    const db = await openIDB();
+    return await new Promise(res => {
+      const tx = db.transaction('handles', 'readonly');
+      const req = tx.objectStore('handles').get('save');
+      req.onsuccess = () => res(req.result ?? null);
+      req.onerror = () => res(null);
+    });
+  } catch (_) { return null; }
+}
+
+async function writeToFile() {
+  if (!fsFileHandle) return;
+  try {
+    const w = await fsFileHandle.createWritable();
+    await w.write(JSON.stringify(S, null, 2));
+    await w.close();
+    flashSyncSaved();
+  } catch (e) {
+    if (e.name === 'NotAllowedError') {
+      fsFileHandle = null;
+      setSyncUI('disconnected');
+    }
+  }
+}
+
+let _flashTimer = null;
+function flashSyncSaved() {
+  const el = document.getElementById('sync-status');
+  if (!el || el.dataset.status !== 'connected') return;
+  el.textContent = '已同步 ✓';
+  clearTimeout(_flashTimer);
+  _flashTimer = setTimeout(() => { if (fsFileHandle) el.textContent = '已连接'; }, 1800);
+}
+
+function setSyncUI(status) {
+  const statusEl = document.getElementById('sync-status');
+  const btnEl = document.getElementById('connect-file-btn');
+  const restoreBtn = document.getElementById('restore-file-btn');
+  if (!statusEl) return;
+  statusEl.dataset.status = status;
+  const cfg = {
+    connected:    { text: '已连接',       color: '#34C759',       btn: '更换文件', restore: true  },
+    disconnected: { text: '未连接',       color: 'var(--muted)',  btn: '连接文件', restore: false },
+    'needs-auth': { text: '需要重新授权', color: '#FF9500',       btn: '重新授权', restore: false },
+  }[status] ?? { text: '未连接', color: 'var(--muted)', btn: '连接文件', restore: false };
+  statusEl.textContent = cfg.text;
+  statusEl.style.color = cfg.color;
+  if (btnEl) btnEl.textContent = cfg.btn;
+  if (restoreBtn) restoreBtn.classList.toggle('hidden', !cfg.restore);
+}
+
+async function connectFileSync() {
+  if (!window.showSaveFilePicker) return;
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: 'adhd-bingo-data.json',
+      types: [{ description: 'JSON 数据', accept: { 'application/json': ['.json'] } }],
+    });
+    fsFileHandle = handle;
+    await persistHandle(handle);
+    setSyncUI('connected');
+    await writeToFile();
+  } catch (e) {
+    if (e.name !== 'AbortError') console.warn('File sync error:', e);
+  }
+}
+
+async function restoreFromFile() {
+  if (!fsFileHandle) return;
+  if (!confirm('将用文件中的数据覆盖当前数据，确定吗？')) return;
+  try {
+    const file = await fsFileHandle.getFile();
+    const data = JSON.parse(await file.text());
+    S = Object.assign(blankState(), data);
+    S.pools.default = (S.pools.default || []).map(t =>
+      typeof t === 'string' ? { text: t, weight: 2 } : t
+    );
+    try { localStorage.setItem('adhd-bingo', JSON.stringify(S)); } catch (_) {}
+    archiveYesterday();
+    if (S.today && S.today.date === todayStr()) {
+      showScreen('bingo'); renderBingo();
+    } else { showScreen('bingo'); }
+    renderPools();
+    renderHistory();
+    const el = document.getElementById('sync-status');
+    if (el) { el.textContent = '已从文件恢复 ✓'; el.style.color = '#34C759'; }
+    setTimeout(() => setSyncUI('connected'), 2200);
+  } catch (_) {
+    alert('读取文件失败，文件可能已损坏。');
+  }
+}
+
+async function initFileSync() {
+  if (!window.showSaveFilePicker) return;
+  const row = document.getElementById('file-sync-row');
+  if (row) row.classList.remove('hidden');
+  setSyncUI('disconnected');
+
+  const handle = await retrieveHandle();
+  if (!handle) return;
+  try {
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm === 'granted') {
+      fsFileHandle = handle;
+      setSyncUI('connected');
+      writeToFile();
+    } else if (perm === 'prompt') {
+      fsFileHandle = handle;
+      setSyncUI('needs-auth');
+    }
+  } catch (_) {}
+}
+
+// ── Export / Import ────────────────────────────────────────────────────────
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `adhd-bingo-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      S = Object.assign(blankState(), data);
+      S.pools.default = (S.pools.default || []).map(t =>
+        typeof t === 'string' ? { text: t, weight: 2 } : t
+      );
+      save();
+      archiveYesterday();
+      if (S.today && S.today.date === todayStr()) {
+        showScreen('bingo'); renderBingo();
+      } else { showScreen('bingo'); }
+      renderPools();
+      renderHistory();
+    } catch (_) {
+      alert('导入失败，文件格式不正确。');
+    }
+  };
+  reader.readAsText(file);
 }
 
 // ── Date utilities (always local time, not UTC) ────────────────────────────
@@ -1141,6 +1315,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('mock-data-btn').addEventListener('click', generateMockHistory);
   document.getElementById('clear-mock-btn').addEventListener('click', clearMockHistory);
+
+  // Data management
+  document.getElementById('connect-file-btn').addEventListener('click', async () => {
+    const status = document.getElementById('sync-status').dataset.status;
+    if (status === 'needs-auth' && fsFileHandle) {
+      try {
+        const perm = await fsFileHandle.requestPermission({ mode: 'readwrite' });
+        if (perm === 'granted') { setSyncUI('connected'); writeToFile(); }
+        else { fsFileHandle = null; connectFileSync(); }
+      } catch (_) { connectFileSync(); }
+    } else {
+      connectFileSync();
+    }
+  });
+  document.getElementById('restore-file-btn').addEventListener('click', restoreFromFile);
+  document.getElementById('export-btn').addEventListener('click', exportJSON);
+  document.getElementById('import-input').addEventListener('change', e => {
+    if (e.target.files[0]) { importJSON(e.target.files[0]); e.target.value = ''; }
+  });
+
+  initFileSync();
 
   if (S.today && S.today.date === todayStr()) {
     showScreen('bingo');

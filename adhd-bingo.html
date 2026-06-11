@@ -149,12 +149,12 @@ body {
   padding: 40px 24px; line-height: 1.7;
 }
 #board-wrap { width: 100%; }
-#bingo-board { display: grid; gap: 7px; width: 100%; aspect-ratio: 1; }
+#bingo-board { display: grid; gap: 6px; width: 100%; aspect-ratio: 1; }
 
 .cell {
   background: #FFFFFF;
   border-radius: var(--radius-xs);
-  box-shadow: 0 0 0 1.5px rgba(60,60,67,0.11);
+  box-shadow: inset 0 0 0 1.5px rgba(60,60,67,0.1);
   display: flex; align-items: center; justify-content: center;
   text-align: center; padding: 4px; cursor: pointer;
   transition: transform .12s, background .18s, box-shadow .18s; overflow: hidden; user-select: none;
@@ -167,28 +167,31 @@ body {
   word-break: break-all;
 }
 
+/* 大事格：浅红底，subtle 红边 */
 .cell.big {
-  background: #F2F2F7;
-  box-shadow: 0 0 0 1.5px #C7C7CC;
+  background: rgba(180,28,44,0.09);
+  box-shadow: inset 0 0 0 1.5px rgba(180,28,44,0.2);
 }
 .cell.big .cell-txt { color: var(--text); font-weight: 600; }
 
+/* 普通格完成：白底 + 内收红描边 */
 .cell.done {
   background: #FFFFFF;
-  box-shadow: 0 0 0 1.5px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
 }
 .cell.done .cell-txt { color: var(--text2); }
 
 .cell.bingo-hi {
   background: #FFFFFF;
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 2.5px var(--accent);
 }
 .cell.bingo-hi .cell-txt { color: var(--text2); font-weight: 600; }
 
+/* 大事格完成：整块深红，无视觉边框 */
 .cell.big.done,
 .cell.big.bingo-hi {
   background: var(--accent);
-  box-shadow: 0 0 0 1.5px var(--accent);
+  box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.08);
 }
 .cell.big.done .cell-txt,
 .cell.big.bingo-hi .cell-txt {
@@ -254,9 +257,31 @@ body {
 .ldot.t1 { background: var(--t1); } .ldot.t2 { background: var(--t2); }
 .ldot.t3 { background: var(--t3); } .ldot.t4 { background: var(--t4); }
 
-.mock-row { display: flex; gap: 16px; margin-top: 16px; }
+.redraw-btn { color: var(--muted); font-size: 13px; text-align: center; width: 100%; padding: 4px 0 8px; }
+
+.mock-row { display: flex; gap: 16px; margin-top: 4px; }
 .mock-btn { color: var(--muted); font-size: 12px; margin-top: 0; }
 .clear-btn { color: var(--accent) !important; }
+
+/* ── Data management card ── */
+.data-card { margin-top: 14px; }
+.data-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; gap: 12px;
+  border-bottom: 1px solid var(--sep);
+}
+.data-row:last-child { border-bottom: none; }
+.data-row-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.data-label { font-size: 14px; font-weight: 500; color: var(--text2); }
+.sync-status { font-size: 12px; color: var(--muted); }
+.data-row-btns { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+.outline-btn {
+  padding: 7px 13px; background: var(--bg2); color: var(--text2);
+  border: none; border-radius: var(--radius-xs); font-size: 13px; font-weight: 500;
+  cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center;
+  transition: background .12s;
+}
+.outline-btn:active { background: var(--sep); }
 
 .alloc-row {
   display: flex; align-items: center; justify-content: space-between;
@@ -332,6 +357,12 @@ body {
   padding: 5px 11px; font-size: 12px; font-weight: 500; color: var(--text2);
   display: flex; align-items: center; gap: 5px;
 }
+.chip-del {
+  background: none; border: none; color: var(--muted); font-size: 10px;
+  cursor: pointer; padding: 0 0 0 2px; line-height: 1;
+  display: flex; align-items: center; flex-shrink: 0;
+}
+.chip-del:hover { color: var(--accent); }
 
 .add-row { display: flex; gap: 7px; }
 .add-input {
@@ -392,9 +423,16 @@ body {
 #physics-container {
   width: 100%; background: var(--card); border-radius: var(--radius);
   overflow: hidden; box-shadow: var(--shadow-card);
-  height: calc(100dvh - 258px); min-height: 220px; max-height: 500px;
+  flex: 1; min-height: 0;
 }
 #physics-canvas { display: block; width: 100%; height: 100%; }
+
+#screen-pool-edit.active {
+  display: flex !important;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
 
 #edit-add-row {
   display: grid;
@@ -409,14 +447,14 @@ body {
   background: var(--bg2); border-radius: var(--radius-xs); overflow: hidden; flex-shrink: 0;
 }
 .w-step {
-  width: 30px; height: 36px; border: none; background: transparent;
-  color: var(--text2); font-size: 18px; cursor: pointer;
+  width: 38px; height: 38px; border: none; background: transparent;
+  color: var(--text2); font-size: 20px; font-weight: 300; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
 .w-step:active { background: var(--sep); }
-.w-step.large { width: 40px; height: 44px; font-size: 22px; }
+.w-step.large { width: 44px; height: 48px; font-size: 24px; font-weight: 300; }
 #add-w-val, #weight-val {
-  min-width: 26px; text-align: center; font-size: 15px; font-weight: 600; color: var(--text);
+  min-width: 32px; text-align: center; font-size: 15px; font-weight: 600; color: var(--text);
 }
 
 .weight-row {
@@ -449,8 +487,8 @@ body {
 
   #app {
     display: flex;
-    max-width: 1100px;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
     min-height: 100dvh;
     padding-bottom: 0 !important;
     background: var(--bg);
@@ -553,6 +591,15 @@ body {
           </div>
           <button id="add-task-btn" class="text-btn">＋ 再加一件</button>
         </div>
+        <div class="card" id="alloc-card">
+          <div id="alloc-toggle" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+            <div class="section-label" style="margin-bottom:0">词条配比</div>
+            <span class="pool-chevron" id="alloc-chev">▼</span>
+          </div>
+          <div id="alloc-body" class="hidden" style="margin-top:12px">
+            <div id="ratio-rows"></div>
+          </div>
+        </div>
         <button id="generate-btn" class="primary-btn">生成今日 Bingo →</button>
       </div>
 
@@ -563,6 +610,7 @@ body {
         </div>
         <div id="tier-bar"><div id="tier-fill"></div></div>
         <div id="tier-label"></div>
+        <button id="redraw-btn" class="text-btn redraw-btn hidden">↻ 重新抽取</button>
         <div id="unlock-banner" class="banner hidden"></div>
       </div>
 
@@ -589,6 +637,28 @@ body {
           <div class="legend-item"><span class="ldot t3"></span>大事 Bingo</div>
           <div class="legend-item"><span class="ldot t4"></span>全完成</div>
         </div>
+        <div class="card data-card">
+          <div class="section-label">数据管理</div>
+          <div id="file-sync-row" class="data-row hidden">
+            <div class="data-row-info">
+              <span class="data-label">文件自动同步</span>
+              <span id="sync-status" class="sync-status" data-status="disconnected">未连接</span>
+            </div>
+            <div class="data-row-btns">
+              <button id="restore-file-btn" class="outline-btn hidden">从文件恢复</button>
+              <button id="connect-file-btn" class="outline-btn">连接文件</button>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-row-info">
+              <span class="data-label">备份与恢复</span>
+            </div>
+            <div class="data-row-btns">
+              <button id="export-btn" class="outline-btn">导出</button>
+              <label class="outline-btn">导入<input type="file" id="import-input" accept=".json" style="display:none"></label>
+            </div>
+          </div>
+        </div>
         <div class="mock-row">
           <button id="mock-data-btn" class="text-btn mock-btn">⚙ 生成模拟数据</button>
           <button id="clear-mock-btn" class="text-btn mock-btn clear-btn">✕ 清除模拟数据</button>
@@ -597,9 +667,9 @@ body {
 
       <!-- Pools -->
       <div id="screen-pools" class="screen">
-        <div class="card" id="ratio-card">
+        <div class="card">
           <div class="section-label">抽取配比</div>
-          <div id="ratio-rows"></div>
+          <div id="ratio-rows-pools"></div>
         </div>
         <div id="pools-list"></div>
       </div>
@@ -618,7 +688,7 @@ body {
           <div class="weight-inline">
             <button class="w-step" id="add-w-minus">−</button>
             <span id="add-w-val">1</span>
-            <button class="w-step" id="add-w-plus">＋</button>
+            <button class="w-step" id="add-w-plus">+</button>
           </div>
           <button id="edit-add-btn" class="add-btn">加入</button>
         </div>
@@ -661,7 +731,7 @@ body {
         <div class="weight-stepper">
           <button class="w-step large" id="weight-minus">−</button>
           <span id="weight-val">1</span>
-          <button class="w-step large" id="weight-plus">＋</button>
+          <button class="w-step large" id="weight-plus">+</button>
         </div>
       </div>
       <button id="term-save-btn" class="primary-btn">保存</button>
@@ -732,7 +802,7 @@ function blankState() {
     history: [],
     totalBTB: 0,
     pools: {
-      default: [...DEFAULT_TERMS],
+      default: DEFAULT_TERMS.map(t => ({ text: t, weight: 2 })),
       custom: [
         { name: '自定义池 1', terms: [], unlocked: false },
         { name: '自定义池 2', terms: [], unlocked: false },
@@ -754,10 +824,183 @@ function load() {
     const raw = localStorage.getItem('adhd-bingo');
     if (raw) S = Object.assign(blankState(), JSON.parse(raw));
   } catch (_) {}
+  S.pools.default = (S.pools.default || []).map(t =>
+    typeof t === 'string' ? { text: t, weight: 2 } : t
+  );
 }
 
+let _writeTimer = null;
 function save() {
   try { localStorage.setItem('adhd-bingo', JSON.stringify(S)); } catch (_) {}
+  clearTimeout(_writeTimer);
+  _writeTimer = setTimeout(writeToFile, 300);
+}
+
+// ── File System Access API (Chrome/Edge) ──────────────────────────────────
+
+let fsFileHandle = null;
+
+function openIDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('adhd-bingo-meta', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('handles');
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+async function persistHandle(handle) {
+  try {
+    const db = await openIDB();
+    const tx = db.transaction('handles', 'readwrite');
+    tx.objectStore('handles').put(handle, 'save');
+  } catch (_) {}
+}
+
+async function retrieveHandle() {
+  try {
+    const db = await openIDB();
+    return await new Promise(res => {
+      const tx = db.transaction('handles', 'readonly');
+      const req = tx.objectStore('handles').get('save');
+      req.onsuccess = () => res(req.result ?? null);
+      req.onerror = () => res(null);
+    });
+  } catch (_) { return null; }
+}
+
+async function writeToFile() {
+  if (!fsFileHandle) return;
+  try {
+    const w = await fsFileHandle.createWritable();
+    await w.write(JSON.stringify(S, null, 2));
+    await w.close();
+    flashSyncSaved();
+  } catch (e) {
+    if (e.name === 'NotAllowedError') {
+      fsFileHandle = null;
+      setSyncUI('disconnected');
+    }
+  }
+}
+
+let _flashTimer = null;
+function flashSyncSaved() {
+  const el = document.getElementById('sync-status');
+  if (!el || el.dataset.status !== 'connected') return;
+  el.textContent = '已同步 ✓';
+  clearTimeout(_flashTimer);
+  _flashTimer = setTimeout(() => { if (fsFileHandle) el.textContent = '已连接'; }, 1800);
+}
+
+function setSyncUI(status) {
+  const statusEl = document.getElementById('sync-status');
+  const btnEl    = document.getElementById('connect-file-btn');
+  const restoreBtn = document.getElementById('restore-file-btn');
+  if (!statusEl) return;
+  statusEl.dataset.status = status;
+  const cfg = {
+    connected:    { text: '已连接',       color: '#34C759',      btn: '更换文件', restore: true  },
+    disconnected: { text: '未连接',       color: 'var(--muted)', btn: '连接文件', restore: false },
+    'needs-auth': { text: '需要重新授权', color: '#FF9500',      btn: '重新授权', restore: false },
+  }[status] ?? { text: '未连接', color: 'var(--muted)', btn: '连接文件', restore: false };
+  statusEl.textContent = cfg.text;
+  statusEl.style.color = cfg.color;
+  if (btnEl) btnEl.textContent = cfg.btn;
+  if (restoreBtn) restoreBtn.classList.toggle('hidden', !cfg.restore);
+}
+
+async function connectFileSync() {
+  if (!window.showSaveFilePicker) return;
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: 'adhd-bingo-data.json',
+      types: [{ description: 'JSON 数据', accept: { 'application/json': ['.json'] } }],
+    });
+    fsFileHandle = handle;
+    await persistHandle(handle);
+    setSyncUI('connected');
+    await writeToFile();
+  } catch (e) {
+    if (e.name !== 'AbortError') console.warn('File sync error:', e);
+  }
+}
+
+async function restoreFromFile() {
+  if (!fsFileHandle) return;
+  if (!confirm('将用文件中的数据覆盖当前数据，确定吗？')) return;
+  try {
+    const file = await fsFileHandle.getFile();
+    const data = JSON.parse(await file.text());
+    S = Object.assign(blankState(), data);
+    S.pools.default = (S.pools.default || []).map(t =>
+      typeof t === 'string' ? { text: t, weight: 2 } : t
+    );
+    try { localStorage.setItem('adhd-bingo', JSON.stringify(S)); } catch (_) {}
+    archiveYesterday();
+    if (S.today && S.today.date === todayStr()) {
+      showScreen('bingo'); renderBingo();
+    } else { showScreen('bingo'); }
+    renderPools();
+    renderHistory();
+    const el = document.getElementById('sync-status');
+    if (el) { el.textContent = '已从文件恢复 ✓'; el.style.color = '#34C759'; }
+    setTimeout(() => setSyncUI('connected'), 2200);
+  } catch (_) {
+    alert('读取文件失败，文件可能已损坏。');
+  }
+}
+
+async function initFileSync() {
+  if (!window.showSaveFilePicker) return;
+  const row = document.getElementById('file-sync-row');
+  if (row) row.classList.remove('hidden');
+  setSyncUI('disconnected');
+  const handle = await retrieveHandle();
+  if (!handle) return;
+  try {
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm === 'granted') {
+      fsFileHandle = handle;
+      setSyncUI('connected');
+      writeToFile();
+    }
+  } catch (_) {}
+}
+
+// ── Export / Import ────────────────────────────────────────────────────────
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `adhd-bingo-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      S = Object.assign(blankState(), data);
+      S.pools.default = (S.pools.default || []).map(t =>
+        typeof t === 'string' ? { text: t, weight: 2 } : t
+      );
+      save();
+      archiveYesterday();
+      if (S.today && S.today.date === todayStr()) {
+        showScreen('bingo'); renderBingo();
+      } else { showScreen('bingo'); }
+      renderPools();
+      renderHistory();
+    } catch (_) {
+      alert('导入失败，文件格式不正确。');
+    }
+  };
+  reader.readAsText(file);
 }
 
 function localDateStr(date) {
@@ -813,47 +1056,154 @@ function findBigTaskPositions(count, n) {
 
 function termText(t) { return typeof t === 'string' ? t : t.text; }
 
-function sampleTerms(needed) {
+// ── Weight-balanced board layout ──────────────────────────────────────────
+//
+// Each bingo line (row, col, diagonal) gets one weight-3 and one weight-1 cell,
+// keeping every line's total difficulty equal: 3 + 1 + 2*(n-2) = 2*n.
+// Big task positions count as the row/col's weight-3 slot.
+
+function buildWeightLayout(n, bigTaskPositions) {
+  // Try up to 60 random placements, keep the one where diagonals are most balanced
+  let best = null;
+  let bestScore = Infinity;
+  for (let attempt = 0; attempt < 120; attempt++) {
+    const layout = _tryWeightLayout(n, bigTaskPositions);
+    const score = _diagImbalance(layout, n);
+    if (score < bestScore) { bestScore = score; best = layout; }
+    if (score === 0) break;
+  }
+  return best;
+}
+
+function _tryWeightLayout(n, bigTaskPositions) {
+  const weight = new Array(n * n).fill(2);
+  bigTaskPositions.forEach(p => { weight[p] = 3; });
+
+  const usedW3Rows = new Set(bigTaskPositions.map(p => Math.floor(p / n)));
+  const usedW3Cols = new Set(bigTaskPositions.map(p => p % n));
+
+  const freeW3Rows = shuffle(Array.from({length: n}, (_, i) => i).filter(r => !usedW3Rows.has(r)));
+  const freeW3Cols = shuffle(Array.from({length: n}, (_, i) => i).filter(c => !usedW3Cols.has(c)));
+  for (let i = 0; i < Math.min(freeW3Rows.length, freeW3Cols.length); i++) {
+    weight[freeW3Rows[i] * n + freeW3Cols[i]] = 3;
+  }
+
+  const w3ColByRow = new Array(n).fill(-1);
+  for (let pos = 0; pos < n * n; pos++) {
+    if (weight[pos] === 3) w3ColByRow[Math.floor(pos / n)] = pos % n;
+  }
+
+  const w1Cols = derangementRelative(n, w3ColByRow);
+  for (let r = 0; r < n; r++) {
+    const pos = r * n + w1Cols[r];
+    if (weight[pos] === 2) weight[pos] = 1;
+  }
+  return weight;
+}
+
+function _diagImbalance(weight, n) {
+  const target = n * 2;
+  const d1 = Array.from({length:n}, (_, i) => weight[i*n+i]).reduce((a,b)=>a+b);
+  const d2 = Array.from({length:n}, (_, i) => weight[i*n+(n-1-i)]).reduce((a,b)=>a+b);
+  return Math.abs(d1 - target) + Math.abs(d2 - target);
+}
+
+function derangementRelative(n, forbidden) {
+  // Permutation of 0..n-1 where result[i] !== forbidden[i]
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const perm = shuffle(Array.from({length: n}, (_, i) => i));
+    if (perm.every((v, i) => forbidden[i] < 0 || v !== forbidden[i])) return perm;
+  }
+  // Fallback: fix conflicts by swapping with a safe neighbour
+  const perm = shuffle(Array.from({length: n}, (_, i) => i));
+  for (let i = 0; i < n; i++) {
+    if (forbidden[i] >= 0 && perm[i] === forbidden[i]) {
+      for (let j = (i + 1) % n; j !== i; j = (j + 1) % n) {
+        if (perm[j] !== forbidden[i] && perm[i] !== forbidden[j]) {
+          [perm[i], perm[j]] = [perm[j], perm[i]]; break;
+        }
+      }
+    }
+  }
+  return perm;
+}
+
+// Collect pool terms grouped by weight {1:[], 2:[], 3:[]}
+function collectPoolTermsByWeight() {
   const used = new Set();
-  const result = [];
+  const byW = { 1: [], 2: [], 3: [] };
+
   const order = S.poolOrder || [0, 1, 2, 3];
   const allocs = S.poolAllocations || [0, 0, 0, 0];
-
   for (const idx of order) {
     const pool = S.pools.custom[idx];
     if (!pool?.unlocked || !pool.terms.length) continue;
     const count = Math.min(allocs[idx] || 0, pool.terms.length);
-    if (count === 0) continue;
-    const shuffled = shuffle([...pool.terms]);
+    if (!count) continue;
     let added = 0;
-    for (const raw of shuffled) {
+    for (const raw of shuffle([...pool.terms])) {
       if (added >= count) break;
       const t = termText(raw);
-      if (!used.has(t)) { result.push(t); used.add(t); added++; }
+      const w = (typeof raw === 'object' ? raw.weight : null) ?? 2;
+      if (!used.has(t)) { byW[w]?.push(t); used.add(t); added++; }
     }
   }
-
   for (const raw of shuffle([...S.pools.default])) {
-    if (result.length >= needed) break;
     const t = termText(raw);
-    if (!used.has(t)) { result.push(t); used.add(t); }
+    const w = (typeof raw === 'object' ? raw.weight : null) ?? 2;
+    if (!used.has(t)) { byW[w]?.push(t); used.add(t); }
   }
+  return byW;
+}
 
-  if (result.length < needed) {
-    for (const raw of S.pools.default) {
-      if (result.length >= needed) break;
-      result.push(termText(raw));
+// Draw needed[1/2/3] terms from each weight tier, with cross-tier fallback
+function sampleTermsByWeight(needed) {
+  const byW = collectPoolTermsByWeight();
+  const result = { 1: [], 2: [], 3: [] };
+  const usedSet = new Set();
+
+  for (const w of [1, 2, 3]) {
+    for (const t of byW[w]) {
+      if (result[w].length >= (needed[w] || 0)) break;
+      result[w].push(t); usedSet.add(t);
     }
   }
 
-  return shuffle(result);
+  // Cross-tier fallback (priority: weight-2 first, then the other extreme)
+  for (const [w, fallbacks] of [[1, [2, 3]], [3, [2, 1]], [2, [1, 3]]]) {
+    let gap = (needed[w] || 0) - result[w].length;
+    if (gap <= 0) continue;
+    for (const fw of fallbacks) {
+      for (const t of byW[fw]) {
+        if (gap <= 0) break;
+        if (!usedSet.has(t)) { result[w].push(t); usedSet.add(t); gap--; }
+      }
+      if (gap <= 0) break;
+    }
+  }
+
+  // Last resort padding
+  for (const w of [1, 2, 3]) {
+    while (result[w].length < (needed[w] || 0)) result[w].push('待添加');
+  }
+  return result;
 }
 
 function generateBoard(bigTasks, n) {
   const total = n * n;
   const btPositions = findBigTaskPositions(bigTasks.length, n);
   const btSet = new Set(btPositions);
-  const randomTerms = sampleTerms(total - bigTasks.length);
+
+  // Build balanced weight grid, then count how many of each weight are needed
+  const cellWeights = buildWeightLayout(n, btPositions);
+  const needed = { 1: 0, 2: 0, 3: 0 };
+  for (let i = 0; i < total; i++) {
+    if (!btSet.has(i)) needed[cellWeights[i]]++;
+  }
+
+  // Sample terms by weight tier
+  const termQueues = sampleTermsByWeight(needed);
+  const queues = { 1: termQueues[1], 2: termQueues[2], 3: termQueues[3] };
 
   const board = Array.from({ length: total }, () => ({
     text: '', weight: 2, isBigTask: false, bigTaskIdx: null, completed: false,
@@ -863,10 +1213,10 @@ function generateBoard(bigTasks, n) {
     board[pos] = { text: bigTasks[i], weight: 3, isBigTask: true, bigTaskIdx: i, completed: false };
   });
 
-  let ri = 0;
   for (let i = 0; i < total; i++) {
     if (!btSet.has(i)) {
-      board[i] = { text: randomTerms[ri++] ?? '待添加', weight: 2, isBigTask: false, bigTaskIdx: null, completed: false };
+      const w = cellWeights[i];
+      board[i] = { text: queues[w].shift() ?? '待添加', weight: w, isBigTask: false, bigTaskIdx: null, completed: false };
     }
   }
 
@@ -963,6 +1313,7 @@ function initSetup() {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      maybeRerenderRatios();
     });
   });
 
@@ -980,10 +1331,12 @@ function initSetup() {
       row.remove();
       renumberTasks();
       document.getElementById('add-task-btn').style.display = '';
+      maybeRerenderRatios();
     });
     document.getElementById('task-inputs').appendChild(row);
     if (rows.length + 1 >= 3) document.getElementById('add-task-btn').style.display = 'none';
     row.querySelector('input').focus();
+    maybeRerenderRatios();
   });
 
   document.getElementById('generate-btn').addEventListener('click', () => {
@@ -1064,6 +1417,8 @@ function renderBingo() {
   renderBigTasks();
   renderBoard();
   renderTier();
+  const anyDone = S.today.board.some(c => c.completed);
+  document.getElementById('redraw-btn').classList.toggle('hidden', anyDone);
 }
 
 const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
@@ -1172,12 +1527,21 @@ function renderPools() {
 }
 
 function totalRandomCells() {
-  if (!S.today) return 20;
-  return S.today.n ** 2 - S.today.bigTasks.length;
+  if (S.today && S.today.date === todayStr()) {
+    return S.today.n ** 2 - S.today.bigTasks.length;
+  }
+  const n = parseInt(document.querySelector('.size-btn.active')?.dataset.size ?? '5');
+  const taskCount = document.querySelectorAll('#task-inputs .task-row').length;
+  return n * n - taskCount;
 }
 
-function renderRatios() {
-  const container = document.getElementById('ratio-rows');
+function maybeRerenderRatios() {
+  if (!document.getElementById('alloc-body').classList.contains('hidden')) {
+    renderRatios();
+  }
+}
+
+function renderRatiosInto(container) {
   container.innerHTML = '';
   const cells = totalRandomCells();
   const order = S.poolOrder || [0, 1, 2, 3];
@@ -1191,12 +1555,22 @@ function renderRatios() {
   defRow.className = 'alloc-row';
   defRow.innerHTML = `
     <span class="alloc-name">默认池</span>
-    <span class="alloc-auto" id="alloc-default">${defaultCount} 个</span>`;
+    <span class="alloc-auto">${defaultCount} 个</span>`;
   container.appendChild(defRow);
 
   order.forEach(idx => {
     const pool = S.pools.custom[idx];
-    if (!pool?.unlocked) return;
+    if (!pool) return;
+
+    if (!pool.unlocked) {
+      const row = document.createElement('div');
+      row.className = 'alloc-row';
+      row.style.opacity = '0.4';
+      row.innerHTML = `<span class="alloc-name">🔒 ${pool.name}</span><span class="alloc-auto" style="font-size:12px">未解锁</span>`;
+      container.appendChild(row);
+      return;
+    }
+
     const alloc = allocs[idx] || 0;
 
     const row = document.createElement('div');
@@ -1204,13 +1578,13 @@ function renderRatios() {
     row.innerHTML = `
       <span class="alloc-name">${pool.name}</span>
       <div class="alloc-ctrl">
-        <button class="alloc-btn" id="aminus-${idx}">−</button>
-        <span class="alloc-num" id="anum-${idx}">${alloc}</span>
-        <button class="alloc-btn" id="aplus-${idx}">＋</button>
+        <button class="alloc-btn alloc-minus">−</button>
+        <span class="alloc-num">${alloc}</span>
+        <button class="alloc-btn alloc-plus">＋</button>
       </div>`;
 
-    const minusBtn = row.querySelector(`#aminus-${idx}`);
-    const plusBtn  = row.querySelector(`#aplus-${idx}`);
+    const minusBtn = row.querySelector('.alloc-minus');
+    const plusBtn  = row.querySelector('.alloc-plus');
 
     const otherAlloc = order.reduce((s, i) =>
       (S.pools.custom[i]?.unlocked && i !== idx) ? s + (allocs[i] || 0) : s, 0);
@@ -1233,6 +1607,13 @@ function renderRatios() {
 
     container.appendChild(row);
   });
+}
+
+function renderRatios() {
+  const c1 = document.getElementById('ratio-rows');
+  const c2 = document.getElementById('ratio-rows-pools');
+  if (c1) renderRatiosInto(c1);
+  if (c2) renderRatiosInto(c2);
 }
 
 let _drag = null;
@@ -1309,7 +1690,7 @@ function renderPoolCards() {
 
   buildPoolCard(container, {
     id: 'p0', title: '默认词条池', terms: S.pools.default,
-    locked: false, readonly: true,
+    locked: false, readonly: false, customIdx: -1,
   });
 
   (S.poolOrder || [0, 1, 2, 3]).forEach(idx => {
@@ -1339,7 +1720,7 @@ function buildPoolCard(container, { id, title, terms, locked, readonly, customId
        </button>`
     : '';
 
-  const dragHandle = (customIdx !== undefined)
+  const dragHandle = (customIdx !== undefined && customIdx >= 0)
     ? `<span class="drag-handle" aria-label="拖动排序">⠿</span>`
     : '';
 
@@ -1361,7 +1742,7 @@ function buildPoolCard(container, { id, title, terms, locked, readonly, customId
   if (!locked && !readonly) {
     card.querySelector('.pool-edit-btn').addEventListener('click', e => {
       e.stopPropagation();
-      enterPoolEdit(customIdx);
+      enterPoolEdit(customIdx !== undefined ? customIdx : -1);
     });
   }
 
@@ -1382,7 +1763,7 @@ function buildPoolCard(container, { id, title, terms, locked, readonly, customId
   container.appendChild(card);
 }
 
-function populatePoolBody(body, { locked, readonly, terms, customIdx }) {
+function populatePoolBody(body, { locked, readonly, terms, customIdx, id }) {
   body.innerHTML = '';
 
   if (locked) {
@@ -1411,12 +1792,10 @@ function populatePoolBody(body, { locked, readonly, terms, customIdx }) {
   }
   body.appendChild(wrap);
 
-  if (!readonly) {
-    const hint = document.createElement('p');
-    hint.style.cssText = 'font-size:12px;color:var(--muted);margin-top:8px;';
-    hint.textContent = '点击「编辑」按钮进入完整编辑页面';
-    body.appendChild(hint);
-  }
+  const hint = document.createElement('p');
+  hint.style.cssText = 'font-size:12px;color:var(--muted);margin-top:8px;';
+  hint.textContent = '点击「编辑」按钮进入完整编辑页面';
+  body.appendChild(hint);
 }
 
 function updateBoardPlaceholder() {
@@ -1466,13 +1845,25 @@ let physicsTermBodies = [];
 let editingTermBody = null;
 let addWeight = 1;
 
+function getEditingTerms() {
+  return editingPoolIdx === -1 ? S.pools.default : S.pools.custom[editingPoolIdx].terms;
+}
+
 function enterPoolEdit(customIdx) {
   editingPoolIdx = customIdx;
   addWeight = 1;
   document.getElementById('add-w-val').textContent = '1';
 
-  const pool = S.pools.custom[customIdx];
-  document.getElementById('edit-pool-name').value = pool.name;
+  const nameInput = document.getElementById('edit-pool-name');
+  if (customIdx === -1) {
+    nameInput.value = '默认词条池';
+    nameInput.disabled = true;
+    nameInput.style.opacity = '0.5';
+  } else {
+    nameInput.value = S.pools.custom[customIdx].name;
+    nameInput.disabled = false;
+    nameInput.style.opacity = '';
+  }
 
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-pool-edit').classList.add('active');
@@ -1483,8 +1874,13 @@ function enterPoolEdit(customIdx) {
 }
 
 function exitPoolEdit() {
-  const name = document.getElementById('edit-pool-name').value.trim();
-  if (name) S.pools.custom[editingPoolIdx].name = name;
+  if (editingPoolIdx !== -1) {
+    const name = document.getElementById('edit-pool-name').value.trim();
+    if (name) S.pools.custom[editingPoolIdx].name = name;
+  }
+  const nameInput = document.getElementById('edit-pool-name');
+  nameInput.disabled = false;
+  nameInput.style.opacity = '';
   save();
 
   teardownPhysics();
@@ -1517,7 +1913,7 @@ function setupPhysics() {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  physicsEngine = Matter.Engine.create({ gravity: { y: 1.5 } });
+  physicsEngine = Matter.Engine.create({ gravity: { y: 2 }, enableSleeping: true });
   const world = physicsEngine.world;
 
   const thick = 60;
@@ -1527,7 +1923,7 @@ function setupPhysics() {
     Matter.Bodies.rectangle(W + thick / 2, H / 2, thick, H * 3, { isStatic: true }),
   ]);
 
-  addBodies(S.pools.custom[editingPoolIdx].terms, W);
+  addBodies(getEditingTerms(), W);
 
   let last = performance.now();
   function loop(now) {
@@ -1542,7 +1938,7 @@ function setupPhysics() {
   canvas.addEventListener('click', onCanvasClick);
 }
 
-const WEIGHT_RADIUS = { 1: 24, 2: 36, 3: 48 };
+const WEIGHT_RADIUS = { 1: 22, 2: 30, 3: 40 };
 function calcRadius(weight) {
   return WEIGHT_RADIUS[Math.min(Math.max(weight, 1), 3)] ?? 24;
 }
@@ -1561,7 +1957,7 @@ function addBodies(terms, W) {
     const r = calcRadius(term.weight);
     const x = r + Math.random() * Math.max(0, W - 2 * r);
     const body = Matter.Bodies.circle(x, -r - Math.random() * 120, r, {
-      restitution: 0.3, friction: 0.55, frictionAir: 0.018, label: term.text,
+      restitution: 0.05, friction: 0.8, frictionAir: 0.04, sleepThreshold: 30, label: term.text,
     });
     body.termIdx = idx;
     body.termColor = randomCircleColor();
@@ -1641,7 +2037,7 @@ function hitTest(mx, my) {
 
 function openTermEditSheet(body) {
   editingTermBody = body;
-  const term = S.pools.custom[editingPoolIdx].terms[body.termIdx];
+  const term = getEditingTerms()[body.termIdx];
   document.getElementById('term-edit-label').value = term.text;
   document.getElementById('weight-val').textContent = term.weight;
   document.getElementById('term-edit-sheet').classList.remove('hidden');
@@ -1657,7 +2053,7 @@ function addOneTerm(term, termIdx, W) {
   const r = calcRadius(term.weight);
   const x = r + Math.random() * Math.max(0, W - 2 * r);
   const body = Matter.Bodies.circle(x, -r, r, {
-    restitution: 0.3, friction: 0.55, frictionAir: 0.018, label: term.text,
+    restitution: 0.05, friction: 0.8, frictionAir: 0.04, sleepThreshold: 30, label: term.text,
   });
   body.termIdx = termIdx;
   body.termColor = randomCircleColor();
@@ -1669,6 +2065,7 @@ function initPoolEdit() {
   document.getElementById('edit-back-btn').addEventListener('click', exitPoolEdit);
 
   document.getElementById('edit-pool-name').addEventListener('blur', () => {
+    if (editingPoolIdx === -1) return;
     const name = document.getElementById('edit-pool-name').value.trim();
     if (name) S.pools.custom[editingPoolIdx].name = name;
   });
@@ -1684,13 +2081,13 @@ function initPoolEdit() {
     const input = document.getElementById('edit-term-input');
     const text = input.value.trim();
     if (!text) return;
-    const pool = S.pools.custom[editingPoolIdx];
-    if (pool.terms.length >= 50) return;
-    pool.terms.push({ text, weight: addWeight });
+    const terms = getEditingTerms();
+    if (terms.length >= 50) return;
+    terms.push({ text, weight: addWeight });
     save();
-    const newIdx = pool.terms.length - 1;
+    const newIdx = terms.length - 1;
     const container = document.getElementById('physics-container');
-    addOneTerm(pool.terms[newIdx], newIdx, container.offsetWidth);
+    addOneTerm(terms[newIdx], newIdx, container.offsetWidth);
     input.value = '';
     addWeight = 1;
     document.getElementById('add-w-val').textContent = '1';
@@ -1712,7 +2109,7 @@ function initPoolEdit() {
     const w = parseInt(document.getElementById('weight-val').textContent);
     const newText = document.getElementById('term-edit-label').value.trim();
     const termIdx = editingTermBody.termIdx;
-    const term = S.pools.custom[editingPoolIdx].terms[termIdx];
+    const term = getEditingTerms()[termIdx];
     term.weight = w;
     if (newText) term.text = newText;
     save();
@@ -1745,7 +2142,7 @@ function initPoolEdit() {
         tb.termIdx = tb.body.termIdx;
       }
     });
-    S.pools.custom[editingPoolIdx].terms.splice(termIdx, 1);
+    getEditingTerms().splice(termIdx, 1);
     save();
     closeTermEditSheet();
   });
@@ -1760,8 +2157,35 @@ document.addEventListener('DOMContentLoaded', () => {
   initPoolEdit();
   initPoolDrag();
 
+  document.getElementById('alloc-toggle').addEventListener('click', () => {
+    const body = document.getElementById('alloc-body');
+    const chev = document.getElementById('alloc-chev');
+    const open = body.classList.toggle('hidden');
+    chev.classList.toggle('open', !open);
+    if (!open) renderRatios();
+  });
+
+  document.getElementById('redraw-btn').addEventListener('click', () => {
+    if (!S.today || S.today.board.some(c => c.completed)) return;
+    const { board, btPositions } = generateBoard(S.today.bigTasks, S.today.n);
+    S.today.board = board;
+    S.today.btPositions = btPositions;
+    S.today.btbSnapshot = 0;
+    save();
+    renderBingo();
+  });
+
   document.getElementById('mock-data-btn').addEventListener('click', generateMockHistory);
   document.getElementById('clear-mock-btn').addEventListener('click', clearMockHistory);
+
+  document.getElementById('connect-file-btn').addEventListener('click', connectFileSync);
+  document.getElementById('restore-file-btn').addEventListener('click', restoreFromFile);
+  document.getElementById('export-btn').addEventListener('click', exportJSON);
+  document.getElementById('import-input').addEventListener('change', e => {
+    if (e.target.files[0]) { importJSON(e.target.files[0]); e.target.value = ''; }
+  });
+
+  initFileSync();
 
   if (S.today && S.today.date === todayStr()) {
     showScreen('bingo');

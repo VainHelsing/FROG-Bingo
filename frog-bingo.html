@@ -44,7 +44,6 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #F2F2F7;
   background: var(--bg);
   color: var(--text);
   font-family: 'Noto Sans SC', -apple-system, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
@@ -149,8 +148,6 @@ body {
   transition: width .45s cubic-bezier(.4,0,.2,1); width: 0%;
 }
 #tier-label { margin: 0 16px 10px; font-size: 12px; color: var(--muted); font-weight: 500; min-height: 17px; }
-
-#app { padding-bottom: calc(var(--nav-h) + 8px); }
 
 #board-panel { padding: 0 16px 16px; }
 #screen-bingo.active { padding-bottom: clamp(10px, 3vh, 36px); }
@@ -1498,15 +1495,21 @@ function checkUnlocks() {
   }
   // 池2：完成任意一条连线（普通 bingo 或大事 bingo 均可）
   if (anyBingo && !S.pools.custom[1].unlocked) {
+    S.btbSnapshotAtPool2 = S.totalBTB ?? 0;
     doUnlock(1); unlocked = true;
   }
-  // 池3：累计 1 次大事 bingo
-  if ((S.totalBTB ?? 0) >= 1 && !S.pools.custom[2].unlocked) {
-    doUnlock(2); unlocked = true;
+  // 池3：池2解锁后，再完成一条新的大事 bingo（与解锁池2时不同）
+  if (S.pools.custom[1].unlocked && !S.pools.custom[2].unlocked) {
+    if ((S.totalBTB ?? 0) > (S.btbSnapshotAtPool2 ?? 0)) {
+      S.btbSnapshotAtPool3 = S.totalBTB ?? 0;
+      doUnlock(2); unlocked = true;
+    }
   }
-  // 池4：累计 2 次大事 bingo
-  if ((S.totalBTB ?? 0) >= 2 && !S.pools.custom[3].unlocked) {
-    doUnlock(3); unlocked = true;
+  // 池4：池3解锁后，再完成一条新的大事 bingo（与池2、3不同）
+  if (S.pools.custom[2].unlocked && !S.pools.custom[3].unlocked) {
+    if ((S.totalBTB ?? 0) > (S.btbSnapshotAtPool3 ?? 0)) {
+      doUnlock(3); unlocked = true;
+    }
   }
 
   if (newBTB > 0 || newBTDone > 0 || unlocked) save();
@@ -1925,19 +1928,19 @@ function renderPoolCards() {
 
   buildPoolCard(container, {
     id: 'p0', title: '默认事件池', terms: S.pools.default,
-    locked: false, readonly: false, customIdx: -1,
+    locked: false, customIdx: -1,
   });
 
   (S.poolOrder || [0, 1, 2, 3]).forEach(idx => {
     const pool = S.pools.custom[idx];
     buildPoolCard(container, {
       id: `p${idx + 1}`, title: pool.name, terms: pool.terms,
-      locked: !pool.unlocked, readonly: false, customIdx: idx,
+      locked: !pool.unlocked, customIdx: idx,
     });
   });
 }
 
-function buildPoolCard(container, { id, title, terms, locked, readonly, customIdx }) {
+function buildPoolCard(container, { id, title, terms, locked, customIdx }) {
   const card = document.createElement('div');
   card.className = 'pool-card';
   if (customIdx !== undefined) card.dataset.ci = customIdx;
@@ -1946,7 +1949,7 @@ function buildPoolCard(container, { id, title, terms, locked, readonly, customId
     ? '<span class="pool-badge locked">🔒 未解锁</span>'
     : `<span class="pool-badge">${terms.length}</span>`;
 
-  const editBtn = (!locked && !readonly)
+  const editBtn = !locked
     ? `<button class="icon-btn pool-edit-btn" aria-label="编辑" style="width:30px;height:30px;flex-shrink:0;">
          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
            <path d="M10 1.5L12.5 4L4.5 12H2V9.5L10 1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
@@ -1974,7 +1977,7 @@ function buildPoolCard(container, { id, title, terms, locked, readonly, customId
   const body = card.querySelector(`#pb-${id}`);
   const chev = card.querySelector(`#chev-${id}`);
 
-  if (!locked && !readonly) {
+  if (!locked) {
     card.querySelector('.pool-edit-btn').addEventListener('click', e => {
       e.stopPropagation();
       enterPoolEdit(customIdx !== undefined ? customIdx : -1);
@@ -2002,10 +2005,13 @@ function populatePoolBody(body, { locked, readonly, terms, customIdx, id }) {
   body.innerHTML = '';
 
   if (locked) {
-    const msg = customIdx === 0
-      ? '完成第一次 Bingo 即可解锁'
-      : `累计完成 ${customIdx} 次大事 Bingo 即可解锁`;
-    body.innerHTML = `<div class="pool-locked-msg">${msg}</div>`;
+    const msgs = [
+      '累计完成 3 件大事即可解锁',
+      '完成任意一条 Bingo 即可解锁',
+      '池 2 解锁后，再完成一条新的大事 Bingo 即可解锁',
+      '池 3 解锁后，再完成一条新的大事 Bingo 即可解锁',
+    ];
+    body.innerHTML = `<div class="pool-locked-msg">${msgs[customIdx] ?? '未解锁'}</div>`;
     return;
   }
 
@@ -2323,9 +2329,7 @@ function renderPoolList() {
 
         row.appendChild(textEl); row.appendChild(badge); row.appendChild(ungroupBtn);
         row.addEventListener('click', () => {
-          editingTermListIdx = i; editingTermBody = null;
-          // store group item context for save handler
-          editingTermListIdx = i; editingTermListGroupItemIdx = j;
+          editingTermListIdx = i; editingTermListGroupItemIdx = j; editingTermBody = null;
           document.getElementById('term-edit-label').value = text;
           document.getElementById('weight-val').textContent = w;
           document.getElementById('term-edit-sheet').classList.remove('hidden');

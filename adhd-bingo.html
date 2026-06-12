@@ -10,6 +10,9 @@
   <meta name="apple-mobile-web-app-title" content="Bingo">
   <link rel="apple-touch-icon" href="icons/icon.svg">
   <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap">
   <style>
 :root {
   --bg:   #F2F2F7;
@@ -44,7 +47,7 @@ body {
   background: #F2F2F7;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  font-family: 'Noto Sans SC', -apple-system, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
   min-height: 100dvh;
   max-width: 480px;
   margin: 0 auto;
@@ -150,6 +153,7 @@ body {
 #app { padding-bottom: calc(var(--nav-h) + 8px); }
 
 #board-panel { padding: 0 16px 16px; }
+#screen-bingo.active { padding-bottom: clamp(10px, 3vh, 36px); }
 
 #board-empty {
   text-align: center; color: var(--muted); font-size: 14px; font-weight: 500;
@@ -165,14 +169,20 @@ body {
   display: flex; align-items: center; justify-content: center;
   text-align: center; padding: 4px; cursor: pointer;
   transition: transform .12s, background .18s, box-shadow .18s; overflow: hidden; user-select: none;
+  container-type: inline-size;
 }
 .cell:active { transform: scale(.91); box-shadow: 0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1.5px rgba(60,60,67,0.10); }
 
 .cell-txt {
-  font-size: clamp(8px, 1.85vw, 11px); line-height: 1.25; color: var(--text2); font-weight: 600;
-  max-width: 5em;
+  font-size: clamp(9px, 15cqw, 15px); line-height: 1.3; color: var(--text2);
+  font-weight: 500;
+  max-width: 84%;
   overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
-  word-break: break-all;
+  word-break: normal; overflow-wrap: anywhere;
+}
+/* 字重随格子尺寸阶梯增加 */
+@container (min-width: 90px) {
+  .cell-txt { font-weight: 600; }
 }
 
 /* 大事格：浅红底，粗红描边 */
@@ -180,7 +190,9 @@ body {
   background: linear-gradient(145deg, rgba(180,28,44,0.10) 0%, rgba(180,28,44,0.05) 100%);
   box-shadow: 0 2px 8px rgba(180,28,44,0.10);
 }
-.cell.big .cell-txt { color: var(--text); font-weight: 700; }
+.cell.big .cell-txt { color: var(--text); }
+@container (min-width: 72px)  { .cell.big .cell-txt { font-weight: 600; } }
+@container (min-width: 95px)  { .cell.big .cell-txt { font-weight: 700; } }
 
 /* 普通格完成：白底 + 内收红描边 */
 .cell.done {
@@ -193,7 +205,9 @@ body {
   background: linear-gradient(145deg, rgba(180,28,44,0.09) 0%, rgba(180,28,44,0.03) 100%);
   box-shadow: 0 3px 10px rgba(180,28,44,0.18), inset 0 0 0 3px var(--accent);
 }
-.cell.bingo-hi .cell-txt { color: var(--text2); font-weight: 700; }
+.cell.bingo-hi .cell-txt { color: var(--text2); }
+@container (min-width: 72px)  { .cell.bingo-hi .cell-txt { font-weight: 600; } }
+@container (min-width: 95px)  { .cell.bingo-hi .cell-txt { font-weight: 700; } }
 
 /* 大事格完成：整块深红，粗白内描边，立体阴影 */
 .cell.big.done,
@@ -204,8 +218,9 @@ body {
 .cell.big.done .cell-txt,
 .cell.big.bingo-hi .cell-txt {
   color: #FFFFFF;
-  font-weight: 700;
 }
+@container (min-width: 72px)  { .cell.big.done .cell-txt, .cell.big.bingo-hi .cell-txt { font-weight: 600; } }
+@container (min-width: 95px)  { .cell.big.done .cell-txt, .cell.big.bingo-hi .cell-txt { font-weight: 700; } }
 
 .banner {
   margin: 10px 16px 0; padding: 12px 16px; background: var(--bg2);
@@ -463,7 +478,7 @@ body {
   background: var(--card); border-radius: var(--radius);
   box-shadow: var(--shadow-card);
 }
-.pli-sort-bar { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--sep); flex-shrink: 0; }
+.pli-sort-bar { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--sep); flex-shrink: 0; position: sticky; top: 0; z-index: 1; background: var(--card); }
 .pli-sort-btn { display: inline-flex; align-items: center; gap: 1px; padding: 4px 10px; border-radius: 8px; border: none; background: var(--bg2); color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; transition: all .12s; line-height: 1; }
 .pli-sort-btn.active { background: var(--accent); color: #fff; }
 .pli-icon-btn { background: none !important; border: none !important; color: var(--accent) !important; opacity: 0.75; padding: 2px 6px; font-size: 19px; cursor: pointer; line-height: 1; }
@@ -603,17 +618,18 @@ body {
   body {
     max-width: none;
     overflow-x: hidden;
+    min-width: 760px;
   }
 
   #app {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    max-width: none;
-    margin: 0;
+    max-width: 1800px;
+    margin: 0 auto;
     min-height: 100dvh;
-    padding: 16px 16px 16px 12px !important;
-    gap: 12px;
+    padding: clamp(8px, 1.2vw, 20px) clamp(10px, 1.4vw, 20px) clamp(8px, 1.2vw, 20px) clamp(8px, 1vw, 16px) !important;
+    gap: clamp(8px, 0.9vw, 16px);
     background: var(--bg);
   }
 
@@ -678,8 +694,8 @@ body {
 
   /* ── Left screens panel: floating card ── */
   #screens {
-    width: 340px;
-    min-width: 340px;
+    width: clamp(290px, 26vw, 370px);
+    min-width: clamp(290px, 26vw, 370px);
     flex-shrink: 0;
     background: var(--card);
     border-radius: 20px;
@@ -707,8 +723,7 @@ body {
   }
 
   #board-wrap {
-    width: min(100%, calc(100dvh - 160px));
-    max-width: none;
+    width: min(100%, calc(100dvh - 100px), 700px);
     padding: 0 !important;
   }
 
@@ -719,14 +734,18 @@ body {
     flex: 1;
   }
 
-  .cell-txt {
-    font-size: clamp(9px, 1.1vw, 14px);
-  }
   #bingo-board { gap: 8px; }
 
   #screen-history, #screen-personal {
     padding-bottom: 24px;
   }
+
+  /* Fluid typography — non-linear: constant base + small vw component */
+  .screen-header h1 { font-size: clamp(21px, 0.8vw + 12px, 28px); }
+  .screen-header h2 { font-size: clamp(18px, 0.6vw + 11px, 22px); }
+  .subtitle         { font-size: clamp(12px, 0.4vw + 7px, 14px); }
+  #streak-num       { font-size: clamp(38px, 1.5vw + 19px, 52px); }
+  #streak-label     { font-size: clamp(11px, 0.3vw + 7px, 13px); }
 }
   </style>
 </head>
@@ -934,56 +953,36 @@ body {
 'use strict';
 
 const DEFAULT_TERMS = [
-  '分心之后成功在五分钟内转回注意力',
-  '喝完了一整杯水',
-  '按时吃饭',
-  '完成了一件拖延已久的小事',
-  '记得按时吃药',
-  '把手机放到另一个房间专注工作',
-  '用番茄钟完成了一个25分钟',
-  '发现自己走神后主动拉回来',
-  '今天没有开启新坑',
-  '整理了桌面或一个抽屉',
-  '及时回复了一条重要消息',
-  '做了五分钟拉伸或运动',
-  '写下了一个困扰已久的想法',
-  '成功拒绝了一个不重要的请求',
-  '睡前把明天要用的东西准备好了',
-  '感到过载时主动休息了',
-  '把一件大事拆成了小步骤',
-  '今天提前出门了',
-  '做了一件两分钟就能做完的事',
-  '洗了澡',
-  '手机充上了电',
-  '记录了今天的支出',
-  '没有在睡前刷手机超过30分钟',
-  '完成了一封邮件或消息的草稿',
-  '专注了超过45分钟没有查手机',
-  '把垃圾或脏衣服处理掉了',
-  '今天说出了我需要帮助',
-  '运动了10分钟以上',
-  '做了一件一直想做但一直没做的小事',
-  '思维风暴时写下了所有想法',
-  '出门前检查了钥匙钱包手机',
-  '设置了一个提醒而不是靠记忆',
-  '完成了一件超出预期的事',
-  '今天和朋友或家人联系了',
-  '把重要的事写进了日历',
-  '好好做饭或认真吃了一顿饭',
-  '睡够了7小时',
-  '关掉了不必要的通知',
-  '精力充沛时抓住机会完成了重要事项',
-  '把犯错的自责转化成了下次的计划',
-  '今天没有过度道歉',
-  '对自己的一个进步感到骄傲',
-  '感到焦虑时用了一个应对方法',
-  '把脑子里的事清空写成了清单',
-  '今天准时开始了一件事',
-  '完成一件事后给自己休息时间',
-  '今天允许自己做了一件纯粹娱乐的事',
-  '完成了昨天没做完的一件事',
-  '花时间照顾了自己的身体或情绪',
-  '今天对一件事保持了好奇心',
+  '分心后五分钟内拉回注意力',
+  '喝六杯水',
+  '按时吃两顿饭',
+  '完成一件拖延已久的小任务',
+  '刷两次牙',
+  '散步一小时',
+  '没有开启新坑',
+  '在午夜之前整理桌面或抽屉',
+  '及时回复一条重要消息',
+  '运动 30 分钟',
+  '消耗部分囤积物品',
+  '做 brain dump',
+  '把一件重要任务拆成小步骤，并推进',
+  '完成一件两分钟内的小任务',
+  '午夜前洗澡',
+  '睡前玩电子设备不超过30分钟',
+  '专注45分钟不看手机',
+  '完成自己设定的 SOP',
+  '没丢东西',
+  '没忘带钥匙钱包手机',
+  '及时设置提醒，不靠记忆',
+  '联系一个很久没联系的朋友',
+  '睡够7小时',
+  '刷 SNS 时长不超过 1 小时',
+  '精力高峰时段优先完成了重要事项',
+  '做日/周/月复盘',
+  '写 done list',
+  '准时开始一件事',
+  '做间歇式记录',
+  '推进自己曽感兴趣的项目',
 ];
 
 function blankState() {
@@ -1477,19 +1476,35 @@ function checkUnlocks() {
     S.totalBTB = (S.totalBTB ?? 0) + newBTB;
   }
 
+  const btDoneCount = btPositions.filter(i => board[i]?.completed).length;
+  const prevBTDone = S.today.btDoneSnapshot ?? 0;
+  const newBTDone = Math.max(0, btDoneCount - prevBTDone);
+  if (newBTDone > 0) {
+    S.today.btDoneSnapshot = btDoneCount;
+    S.totalBTDone = (S.totalBTDone ?? 0) + newBTDone;
+  }
+
   const anyBingo = lines.length > 0;
   let unlocked = false;
 
-  if (anyBingo && !S.pools.custom[0].unlocked) {
+  // 池1：累计完成 3 件大事
+  if ((S.totalBTDone ?? 0) >= 3 && !S.pools.custom[0].unlocked) {
     doUnlock(0); unlocked = true;
   }
-  [1, 2, 3].forEach((threshold, i) => {
-    if ((S.totalBTB ?? 0) >= threshold && !S.pools.custom[i + 1].unlocked) {
-      doUnlock(i + 1); unlocked = true;
-    }
-  });
+  // 池2：完成任意一条连线（普通 bingo 或大事 bingo 均可）
+  if (anyBingo && !S.pools.custom[1].unlocked) {
+    doUnlock(1); unlocked = true;
+  }
+  // 池3：累计 1 次大事 bingo
+  if ((S.totalBTB ?? 0) >= 1 && !S.pools.custom[2].unlocked) {
+    doUnlock(2); unlocked = true;
+  }
+  // 池4：累计 2 次大事 bingo
+  if ((S.totalBTB ?? 0) >= 2 && !S.pools.custom[3].unlocked) {
+    doUnlock(3); unlocked = true;
+  }
 
-  if (newBTB > 0 || unlocked) save();
+  if (newBTB > 0 || newBTDone > 0 || unlocked) save();
 }
 
 function doUnlock(customIdx) {
@@ -2543,14 +2558,25 @@ function drawFrame(ctx, W, H) {
 
 function wrapText(ctx, text, maxW, maxLines) {
   const lines = [];
+  const words = text.split(' ');
   let line = '';
-  for (const ch of text) {
-    const test = line + ch;
-    if (ctx.measureText(test).width > maxW && line) {
-      lines.push(line);
-      if (lines.length >= maxLines) return lines;
-      line = ch;
-    } else line = test;
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width <= maxW) {
+      line = test;
+    } else if (ctx.measureText(word).width <= maxW) {
+      if (line) { lines.push(line); if (lines.length >= maxLines) return lines; }
+      line = word;
+    } else {
+      if (line) { lines.push(line); if (lines.length >= maxLines) return lines; line = ''; }
+      for (const ch of word) {
+        const t2 = line + ch;
+        if (ctx.measureText(t2).width > maxW && line) {
+          lines.push(line); if (lines.length >= maxLines) return lines;
+          line = ch;
+        } else line = t2;
+      }
+    }
   }
   if (line) lines.push(line);
   return lines;
@@ -2871,6 +2897,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } else if (S.today && S.today.date === todayStr()) {
     showScreen('bingo');
     renderBingo();
+    checkUnlocks();
   } else {
     showScreen('bingo');
   }

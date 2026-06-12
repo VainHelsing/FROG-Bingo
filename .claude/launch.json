@@ -4,8 +4,8 @@
     {
       "name": "adhd-bingo",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "7777"],
-      "port": 7777
+      "runtimeArgs": ["-m", "http.server", "7778"],
+      "port": 7778
     }
   ]
 }

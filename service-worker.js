@@ -1,4 +1,4 @@
-const CACHE = 'adhd-bingo-v2';
+const CACHE = 'adhd-bingo-v4';
 const PRECACHE = [
   './',
   './index.html',

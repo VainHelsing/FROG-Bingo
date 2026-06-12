@@ -47,7 +47,7 @@ body {
 
 #app { padding-bottom: calc(var(--nav-h) + 8px); }
 
-.screen { display: none; padding: 20px 16px 16px; animation: fadeUp .18s ease; }
+.screen { display: none; padding: 20px 16px calc(var(--nav-h) + 16px); animation: fadeUp .18s ease; }
 .screen.active { display: block; }
 
 @keyframes fadeUp {
@@ -154,44 +154,45 @@ body {
 .cell {
   background: #FFFFFF;
   border-radius: var(--radius-xs);
-  box-shadow: inset 0 0 0 1.5px rgba(60,60,67,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04), inset 0 0 0 1.5px rgba(60,60,67,0.10);
   display: flex; align-items: center; justify-content: center;
   text-align: center; padding: 4px; cursor: pointer;
   transition: transform .12s, background .18s, box-shadow .18s; overflow: hidden; user-select: none;
 }
-.cell:active { transform: scale(.91); }
+.cell:active { transform: scale(.91); box-shadow: 0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1.5px rgba(60,60,67,0.10); }
 
 .cell-txt {
-  font-size: clamp(8px, 1.85vw, 11px); line-height: 1.35; color: var(--text2);
+  font-size: clamp(8px, 1.85vw, 11px); line-height: 1.25; color: var(--text2); font-weight: 600;
+  max-width: 5em;
   overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
   word-break: break-all;
 }
 
-/* 大事格：浅红底，subtle 红边 */
+/* 大事格：浅红底，粗红描边 */
 .cell.big {
-  background: rgba(180,28,44,0.09);
-  box-shadow: inset 0 0 0 1.5px rgba(180,28,44,0.2);
+  background: linear-gradient(145deg, rgba(180,28,44,0.10) 0%, rgba(180,28,44,0.05) 100%);
+  box-shadow: 0 2px 8px rgba(180,28,44,0.10);
 }
-.cell.big .cell-txt { color: var(--text); font-weight: 600; }
+.cell.big .cell-txt { color: var(--text); font-weight: 700; }
 
 /* 普通格完成：白底 + 内收红描边 */
 .cell.done {
   background: #FFFFFF;
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: 0 2px 6px rgba(180,28,44,0.12), inset 0 0 0 3px var(--accent);
 }
 .cell.done .cell-txt { color: var(--text2); }
 
 .cell.bingo-hi {
-  background: #FFFFFF;
-  box-shadow: inset 0 0 0 2.5px var(--accent);
+  background: linear-gradient(145deg, rgba(180,28,44,0.09) 0%, rgba(180,28,44,0.03) 100%);
+  box-shadow: 0 3px 10px rgba(180,28,44,0.18), inset 0 0 0 3px var(--accent);
 }
-.cell.bingo-hi .cell-txt { color: var(--text2); font-weight: 600; }
+.cell.bingo-hi .cell-txt { color: var(--text2); font-weight: 700; }
 
-/* 大事格完成：整块深红，无视觉边框 */
+/* 大事格完成：整块深红，粗白内描边，立体阴影 */
 .cell.big.done,
 .cell.big.bingo-hi {
-  background: var(--accent);
-  box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.08);
+  background: linear-gradient(145deg, #c41e35 0%, var(--accent) 100%);
+  box-shadow: 0 4px 14px rgba(180,28,44,0.35), 0 1px 3px rgba(180,28,44,0.2);
 }
 .cell.big.done .cell-txt,
 .cell.big.bingo-hi .cell-txt {
@@ -364,6 +365,27 @@ body {
 }
 .chip-del:hover { color: var(--accent); }
 
+.pool-dist {
+  display: flex; height: 6px; border-radius: 4px; overflow: hidden;
+  gap: 2px; margin-bottom: 7px;
+}
+.pool-dist-seg {
+  height: 100%; width: var(--seg-w); background: var(--seg-c);
+  border-radius: 4px; flex-shrink: 0;
+}
+.pool-dist-legend {
+  display: flex; gap: 12px; margin-bottom: 12px;
+}
+.pdl-item {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 500;
+}
+.pdl-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.pool-sample { margin-top: 2px; }
+.readonly-chip { cursor: default; }
+
 .add-row { display: flex; gap: 7px; }
 .add-input {
   flex: 1; background: var(--bg); border: none; border-radius: var(--radius-xs);
@@ -408,14 +430,65 @@ body {
   background: var(--bg2); border-radius: 2px; margin: 8px auto 20px;
 }
 
-.edit-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.edit-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+
+/* View toggle (气泡 / 列表) */
+.view-toggle {
+  display: flex; background: var(--bg2); border-radius: var(--radius-xs);
+  padding: 2px; flex-shrink: 0; margin-left: auto;
+}
+.vt-btn {
+  padding: 5px 11px; border-radius: calc(var(--radius-xs) - 2px);
+  border: none; background: transparent;
+  color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s;
+}
+.vt-btn.active {
+  background: var(--card); color: var(--text); font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* List view */
+#pool-list-view {
+  flex: 1; min-height: 0; overflow-y: auto;
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+.pli-sort-bar { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--sep); flex-shrink: 0; }
+.pli-sort-btn { display: inline-flex; align-items: center; gap: 1px; padding: 4px 10px; border-radius: 8px; border: none; background: var(--bg2); color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; transition: all .12s; line-height: 1; }
+.pli-sort-btn.active { background: var(--accent); color: #fff; }
+.pli-icon-btn { background: none !important; border: none !important; color: var(--accent) !important; opacity: 0.75; padding: 2px 6px; font-size: 19px; cursor: pointer; line-height: 1; }
+.pli-icon-btn:hover { opacity: 1; }
+.pli {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 16px; border-bottom: 1px solid var(--sep); cursor: pointer;
+}
+.pli:last-child { border-bottom: none; }
+.pli-text { flex: 1; font-size: 14px; color: var(--text2); line-height: 1.35; }
+.pli-weight {
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  background: var(--bg2); border-radius: 6px; padding: 3px 8px; flex-shrink: 0;
+  cursor: pointer; transition: background .12s; min-width: 22px; text-align: center;
+}
+.pli-weight:hover { background: var(--sep); color: var(--text2); }
+.pli-empty { text-align: center; color: var(--muted); padding: 32px 16px; font-size: 14px; }
+.pli-group { border-bottom: 1px solid var(--sep); background: rgba(180,28,44,0.045); border-left: 3px solid rgba(180,28,44,0.22); margin-bottom: 6px; border-radius: 6px; overflow: hidden; }
+.pli-group + .pli-group { margin-top: 0; }
+.pli-group:last-child { border-bottom: none; }
+.pli-group-header { padding: 6px 10px 4px 16px; display: flex; align-items: center; }
+.pli-group-label { font-size: 11px; font-weight: 600; color: rgba(180,28,44,0.6); text-transform: uppercase; letter-spacing: .5px; }
+.pli-group-item { padding-left: 28px; border-bottom: 1px solid rgba(180,28,44,0.08); }
+.pli-group-item:last-child { border-bottom: none; }
+.pli-ungroup-btn { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 2px 6px; flex-shrink: 0; line-height: 1; opacity: 0.55; }
+.pli-ungroup-btn:hover { color: var(--accent); opacity: 1; }
+.pli-drag-over { background: color-mix(in srgb, var(--accent) 8%, transparent); outline: 1px dashed var(--accent); }
+.pli[draggable], .pli-group-item[draggable] { cursor: grab; }
 .icon-btn {
   width: 34px; height: 34px; border-radius: 50%; border: none;
   background: var(--bg2); color: var(--text2); font-size: 16px;
   cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .edit-name-input {
-  flex: 1; background: var(--bg2); border: none; border-radius: var(--radius-xs);
+  flex: 1; min-width: 0; background: var(--bg2); border: none; border-radius: var(--radius-xs);
   padding: 9px 12px; color: var(--text); font-size: 17px; font-weight: 600; outline: none;
 }
 .edit-name-input:focus { background: var(--bg); box-shadow: 0 0 0 2px var(--bg2); }
@@ -430,8 +503,9 @@ body {
 #screen-pool-edit.active {
   display: flex !important;
   flex-direction: column;
-  height: 100dvh;
+  height: calc(100dvh - var(--nav-h));
   overflow: hidden;
+  padding-bottom: 12px;
 }
 
 #edit-add-row {
@@ -477,6 +551,42 @@ body {
 
 .pool-edit-btn { width: 30px; height: 30px; flex-shrink: 0; }
 
+/* ── Onboarding overlay ── */
+.ob-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: var(--bg); overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ob-content {
+  max-width: 480px; margin: 0 auto;
+  padding: 48px 20px 80px;
+  display: flex; flex-direction: column;
+}
+.ob-title { font-size: 26px; font-weight: 700; letter-spacing: -.4px; margin-bottom: 8px; }
+.ob-subtitle { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 28px; }
+.ob-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.ob-chip {
+  padding: 8px 14px; border-radius: 20px;
+  background: var(--card); box-shadow: var(--shadow-sm);
+  font-size: 13px; font-weight: 500; color: var(--text2);
+  cursor: pointer; user-select: none;
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+.ob-chip.excluded {
+  text-decoration: line-through; color: var(--muted);
+  background: var(--bg2); box-shadow: none;
+}
+.ob-chip.editing {
+  box-shadow: 0 0 0 2px var(--accent); background: var(--card); padding: 6px 10px;
+}
+.ob-chip-input {
+  border: none; outline: none; background: transparent;
+  font-size: 13px; font-weight: 500; color: var(--text2);
+  min-width: 60px; max-width: 220px;
+}
+.ob-count { font-size: 12px; color: var(--muted); text-align: right; margin-bottom: 24px; }
+.ob-import-btn { color: var(--muted); font-size: 13px; margin-top: 12px; text-align: center; width: 100%; }
+
 .hidden { display: none !important; }
 
 @media (min-width: 768px) {
@@ -487,25 +597,88 @@ body {
 
   #app {
     display: flex;
+    flex-direction: row;
+    align-items: flex-start;
     max-width: none;
     margin: 0;
     min-height: 100dvh;
-    padding-bottom: 0 !important;
+    padding: 16px 16px 16px 12px !important;
+    gap: 12px;
     background: var(--bg);
   }
 
+  /* ── Desktop side nav: vertical floating dots ── */
+  #bottom-nav {
+    position: sticky;
+    top: 16px;
+    width: 52px;
+    min-width: 52px;
+    flex-shrink: 0;
+    height: auto;
+    flex-direction: column;
+    background: var(--card);
+    border-top: none;
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 8px 0;
+    transform: none;
+    left: auto;
+    bottom: auto;
+    max-width: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    z-index: 10;
+    overflow: visible;
+  }
+
+  .nav-btn {
+    flex: none;
+    width: 52px;
+    height: 52px;
+    flex-direction: column;
+    position: relative;
+    overflow: visible;
+    border-radius: 0;
+  }
+
+  .nav-btn span {
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--accent);
+    color: #fff;
+    padding: 5px 11px;
+    border-radius: 10px;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s;
+    display: block !important;
+  }
+
+  .nav-btn:hover span,
+  .nav-btn.active span { opacity: 0; }
+  .nav-btn:not(.active):hover span { opacity: 1; }
+
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn:hover { color: var(--accent); }
+
+  /* ── Left screens panel: floating card ── */
   #screens {
     width: 340px;
     min-width: 340px;
     flex-shrink: 0;
     background: var(--card);
-    border-right: 0.5px solid var(--sep);
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
-    min-height: 100dvh;
+    max-height: calc(100dvh - 32px);
     overflow-y: auto;
     padding-bottom: 0 !important;
-    box-shadow: 2px 0 20px rgba(0,0,0,0.04);
   }
 
   .screen { flex-shrink: 0; }
@@ -515,34 +688,18 @@ body {
     display: flex !important;
     align-items: center;
     justify-content: center;
-    padding: 32px 24px;
-    min-height: 100dvh;
+    padding: 0 24px;
+    min-height: calc(100dvh - 32px);
     position: sticky;
-    top: 0;
-    height: 100dvh;
+    top: 16px;
+    height: calc(100dvh - 32px);
     overflow: hidden;
   }
 
   #board-wrap {
-    width: 100%;
-    max-width: 520px;
-    padding: 0 !important;
-  }
-
-  #bottom-nav {
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    transform: none;
-    width: 100%;
+    width: min(100%, calc(100dvh - 160px));
     max-width: none;
-    background: rgba(255,255,255,0.96);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-top: 0.5px solid rgba(60,60,67,0.2);
-    border-right: none;
-    z-index: 10;
-    margin-top: auto;
+    padding: 0 !important;
   }
 
   #screen-bingo.active {
@@ -553,10 +710,11 @@ body {
   }
 
   .cell-txt {
-    font-size: clamp(9px, 1.4vw, 13px);
+    font-size: clamp(9px, 1.1vw, 14px);
   }
+  #bingo-board { gap: 8px; }
 
-  #screen-history {
+  #screen-history, #screen-personal {
     padding-bottom: 24px;
   }
 }
@@ -564,6 +722,21 @@ body {
 </head>
 <body>
   <div id="app">
+
+    <nav id="bottom-nav">
+      <button class="nav-btn active" data-screen="bingo">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="1" y="1" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="12" y="1" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="1" y="12" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="12" y="12" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Bingo</span>
+      </button>
+      <button class="nav-btn" data-screen="history">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="1" y="3" width="20" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M7 1v4M15 1v4M1 9h20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>历史</span>
+      </button>
+      <button class="nav-btn" data-screen="personal">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M3 19c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>个人</span>
+      </button>
+    </nav>
 
     <div id="screens">
 
@@ -593,7 +766,7 @@ body {
         </div>
         <div class="card" id="alloc-card">
           <div id="alloc-toggle" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-            <div class="section-label" style="margin-bottom:0">词条配比</div>
+            <div class="section-label" style="margin-bottom:0">事件配比</div>
             <span class="pool-chevron" id="alloc-chev">▼</span>
           </div>
           <div id="alloc-body" class="hidden" style="margin-top:12px">
@@ -637,6 +810,19 @@ body {
           <div class="legend-item"><span class="ldot t3"></span>大事 Bingo</div>
           <div class="legend-item"><span class="ldot t4"></span>全完成</div>
         </div>
+        <div class="mock-row">
+          <button id="mock-data-btn" class="text-btn mock-btn">⚙ 生成模拟数据</button>
+          <button id="clear-mock-btn" class="text-btn mock-btn clear-btn">✕ 清除模拟数据</button>
+        </div>
+      </div>
+
+      <!-- Personal (事件池 + 数据管理) -->
+      <div id="screen-personal" class="screen">
+        <div class="card">
+          <div class="section-label">抽取配比</div>
+          <div id="ratio-rows-pools"></div>
+        </div>
+        <div id="pools-list"></div>
         <div class="card data-card">
           <div class="section-label">数据管理</div>
           <div id="file-sync-row" class="data-row hidden">
@@ -659,19 +845,6 @@ body {
             </div>
           </div>
         </div>
-        <div class="mock-row">
-          <button id="mock-data-btn" class="text-btn mock-btn">⚙ 生成模拟数据</button>
-          <button id="clear-mock-btn" class="text-btn mock-btn clear-btn">✕ 清除模拟数据</button>
-        </div>
-      </div>
-
-      <!-- Pools -->
-      <div id="screen-pools" class="screen">
-        <div class="card">
-          <div class="section-label">抽取配比</div>
-          <div id="ratio-rows-pools"></div>
-        </div>
-        <div id="pools-list"></div>
       </div>
 
       <!-- Pool Edit -->
@@ -679,10 +852,15 @@ body {
         <div class="edit-header">
           <button id="edit-back-btn" class="icon-btn">←</button>
           <input id="edit-pool-name" type="text" class="edit-name-input" maxlength="12">
+          <div class="view-toggle">
+            <button class="vt-btn active" id="vt-bubble">气泡</button>
+            <button class="vt-btn" id="vt-list">列表</button>
+          </div>
         </div>
         <div id="physics-container">
           <canvas id="physics-canvas"></canvas>
         </div>
+        <div id="pool-list-view" class="hidden"></div>
         <div id="edit-add-row">
           <input id="edit-term-input" type="text" class="add-input" placeholder="新词条" maxlength="16">
           <div class="weight-inline">
@@ -694,20 +872,6 @@ body {
         </div>
       </div>
 
-      <nav id="bottom-nav">
-        <button class="nav-btn active" data-screen="bingo">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="1" y="1" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="12" y="1" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="1" y="12" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="12" y="12" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>
-          <span>Bingo</span>
-        </button>
-        <button class="nav-btn" data-screen="history">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="1" y="3" width="20" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M7 1v4M15 1v4M1 9h20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          <span>历史</span>
-        </button>
-        <button class="nav-btn" data-screen="pools">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M11 7v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          <span>词条池</span>
-        </button>
-      </nav>
     </div>
 
     <div id="board-panel" class="hidden">
@@ -719,6 +883,21 @@ body {
       </div>
     </div>
 
+  </div>
+
+  <!-- Onboarding overlay (new users only) -->
+  <div id="onboarding" class="ob-overlay hidden">
+    <div class="ob-content">
+      <div class="ob-header">
+        <h1 class="ob-title">欢迎使用 ADHD Bingo</h1>
+        <p class="ob-subtitle">先整理一下默认事件池，把不适合你的事件点击划掉，剩下的就是你的专属事件库</p>
+      </div>
+      <div id="ob-chips" class="ob-chips"></div>
+      <div id="ob-count" class="ob-count"></div>
+      <button id="ob-done-btn" class="primary-btn">完成配置，开始使用</button>
+      <button id="ob-import-btn" class="text-btn ob-import-btn">我是老用户，跳过并恢复备份</button>
+      <input type="file" id="ob-import-input" accept=".json" style="display:none">
+    </div>
   </div>
 
   <!-- Term edit sheet -->
@@ -812,6 +991,7 @@ function blankState() {
     },
     poolAllocations: [0, 0, 0, 0],
     poolOrder: [0, 1, 2, 3],
+    poolViewModes: {},
   };
 }
 
@@ -1129,9 +1309,27 @@ function derangementRelative(n, forbidden) {
 }
 
 // Collect pool terms grouped by weight {1:[], 2:[], 3:[]}
+// Returns { 1: [{text, groupKey?}], 2: [...], 3: [...] }
+// groupKey ties items that are mutually exclusive (only one gets drawn)
 function collectPoolTermsByWeight() {
-  const used = new Set();
+  const usedText = new Set();
   const byW = { 1: [], 2: [], 3: [] };
+  let gCounter = 0;
+
+  function addRaw(raw, poolKey) {
+    if (raw?.type === 'group' && Array.isArray(raw.items)) {
+      const groupKey = `${poolKey}-g${gCounter++}`;
+      for (const item of shuffle([...raw.items])) {
+        const t = typeof item === 'string' ? item : item.text;
+        const w = Math.min(3, Math.max(1, (typeof item === 'object' ? item.weight : null) ?? 2));
+        if (!usedText.has(t)) { byW[w].push({ text: t, groupKey }); usedText.add(t); }
+      }
+    } else {
+      const t = termText(raw);
+      const w = Math.min(3, Math.max(1, (typeof raw === 'object' ? raw.weight : null) ?? 2));
+      if (!usedText.has(t)) { byW[w].push({ text: t }); usedText.add(t); }
+    }
+  }
 
   const order = S.poolOrder || [0, 1, 2, 3];
   const allocs = S.poolAllocations || [0, 0, 0, 0];
@@ -1143,40 +1341,46 @@ function collectPoolTermsByWeight() {
     let added = 0;
     for (const raw of shuffle([...pool.terms])) {
       if (added >= count) break;
-      const t = termText(raw);
-      const w = (typeof raw === 'object' ? raw.weight : null) ?? 2;
-      if (!used.has(t)) { byW[w]?.push(t); used.add(t); added++; }
+      addRaw(raw, `c${idx}`); added++;
     }
   }
   for (const raw of shuffle([...S.pools.default])) {
-    const t = termText(raw);
-    const w = (typeof raw === 'object' ? raw.weight : null) ?? 2;
-    if (!used.has(t)) { byW[w]?.push(t); used.add(t); }
+    addRaw(raw, 'd');
   }
   return byW;
 }
 
 // Draw needed[1/2/3] terms from each weight tier, with cross-tier fallback
+// byW entries are {text, groupKey?}; result is plain string arrays
 function sampleTermsByWeight(needed) {
   const byW = collectPoolTermsByWeight();
   const result = { 1: [], 2: [], 3: [] };
-  const usedSet = new Set();
+  const usedTexts = new Set();
+  const usedGroups = new Set();
+
+  function tryPick(item) {
+    if (usedTexts.has(item.text)) return false;
+    if (item.groupKey && usedGroups.has(item.groupKey)) return false;
+    usedTexts.add(item.text);
+    if (item.groupKey) usedGroups.add(item.groupKey);
+    return true;
+  }
 
   for (const w of [1, 2, 3]) {
-    for (const t of byW[w]) {
+    for (const item of byW[w]) {
       if (result[w].length >= (needed[w] || 0)) break;
-      result[w].push(t); usedSet.add(t);
+      if (tryPick(item)) result[w].push(item.text);
     }
   }
 
-  // Cross-tier fallback (priority: weight-2 first, then the other extreme)
+  // Cross-tier fallback
   for (const [w, fallbacks] of [[1, [2, 3]], [3, [2, 1]], [2, [1, 3]]]) {
     let gap = (needed[w] || 0) - result[w].length;
     if (gap <= 0) continue;
     for (const fw of fallbacks) {
-      for (const t of byW[fw]) {
+      for (const item of byW[fw]) {
         if (gap <= 0) break;
-        if (!usedSet.has(t)) { result[w].push(t); usedSet.add(t); gap--; }
+        if (tryPick(item)) { result[w].push(item.text); gap--; }
       }
       if (gap <= 0) break;
     }
@@ -1280,7 +1484,7 @@ function checkUnlocks() {
 function doUnlock(customIdx) {
   S.pools.custom[customIdx].unlocked = true;
   if (!S.poolAllocations) S.poolAllocations = [0, 0, 0, 0];
-  showBanner(`🎉 ${S.pools.custom[customIdx].name} 已解锁！去词条池添加专属词条`);
+  showBanner(`🎉 ${S.pools.custom[customIdx].name} 已解锁！去事件池添加专属事件`);
 }
 
 function showBanner(msg) {
@@ -1689,7 +1893,7 @@ function renderPoolCards() {
   container.innerHTML = '';
 
   buildPoolCard(container, {
-    id: 'p0', title: '默认词条池', terms: S.pools.default,
+    id: 'p0', title: '默认事件池', terms: S.pools.default,
     locked: false, readonly: false, customIdx: -1,
   });
 
@@ -1709,7 +1913,7 @@ function buildPoolCard(container, { id, title, terms, locked, readonly, customId
 
   const badge = locked
     ? '<span class="pool-badge locked">🔒 未解锁</span>'
-    : `<span class="pool-badge">${terms.length}/50</span>`;
+    : `<span class="pool-badge">${terms.length}</span>`;
 
   const editBtn = (!locked && !readonly)
     ? `<button class="icon-btn pool-edit-btn" aria-label="编辑" style="width:30px;height:30px;flex-shrink:0;">
@@ -1774,28 +1978,53 @@ function populatePoolBody(body, { locked, readonly, terms, customIdx, id }) {
     return;
   }
 
+  if (!terms.length) {
+    body.innerHTML = `<p style="font-size:13px;color:var(--muted);padding:8px 0;">还没有词条，点击编辑按钮添加</p>`;
+    return;
+  }
+
+  // A: 权重分布
+  const wCount = { 1: 0, 2: 0, 3: 0 };
+  terms.forEach(t => { const w = (typeof t === 'object' ? t.weight : 2) || 2; wCount[Math.min(3, Math.max(1, w))]++; });
+  const total = terms.length;
+  const distEl = document.createElement('div');
+  distEl.className = 'pool-dist';
+  const WLABELS = { 3: '挑战', 2: '普通', 1: '容易' };
+  const WCOLORS = { 3: '#AE7B7B', 2: '#6B8CAE', 1: '#7FAE8A' };
+  [3, 2, 1].forEach(w => {
+    if (!wCount[w]) return;
+    const pct = Math.round(wCount[w] / total * 100);
+    distEl.innerHTML += `<span class="pool-dist-seg" style="--seg-w:${pct}%;--seg-c:${WCOLORS[w]}" title="${WLABELS[w]} ${wCount[w]}个"></span>`;
+  });
+  const distLegend = document.createElement('div');
+  distLegend.className = 'pool-dist-legend';
+  [3, 2, 1].forEach(w => {
+    if (!wCount[w]) return;
+    distLegend.innerHTML += `<span class="pdl-item" style="color:${WCOLORS[w]}"><span class="pdl-dot" style="background:${WCOLORS[w]}"></span>${WLABELS[w]} ×${wCount[w]}</span>`;
+  });
+  body.appendChild(distEl);
+  body.appendChild(distLegend);
+
+  // B: 随机抽样预览（8条，每次展开刷新）
+  const SAMPLE = 8;
+  const shuffled = [...terms].sort(() => Math.random() - 0.5).slice(0, SAMPLE);
   const wrap = document.createElement('div');
-  wrap.className = 'terms-wrap';
-  const preview = terms.slice(0, 12);
-  preview.forEach(raw => {
+  wrap.className = 'terms-wrap pool-sample';
+  shuffled.forEach(raw => {
     const chip = document.createElement('div');
-    chip.className = 'term-chip';
+    chip.className = 'term-chip readonly-chip';
     chip.textContent = termText(raw);
     wrap.appendChild(chip);
   });
-  if (terms.length > 12) {
+  if (terms.length > SAMPLE) {
     const more = document.createElement('div');
-    more.className = 'term-chip';
-    more.style.color = 'var(--muted)';
-    more.textContent = `+${terms.length - 12} 个`;
+    more.className = 'term-chip readonly-chip';
+    more.style.cssText = 'color:var(--accent);cursor:pointer;';
+    more.textContent = `还有 ${terms.length - SAMPLE} 条…`;
+    more.addEventListener('click', e => { e.stopPropagation(); enterPoolEdit(customIdx !== undefined ? customIdx : -1); });
     wrap.appendChild(more);
   }
   body.appendChild(wrap);
-
-  const hint = document.createElement('p');
-  hint.style.cssText = 'font-size:12px;color:var(--muted);margin-top:8px;';
-  hint.textContent = '点击「编辑」按钮进入完整编辑页面';
-  body.appendChild(hint);
 }
 
 function updateBoardPlaceholder() {
@@ -1833,20 +2062,293 @@ function initNav() {
       const s = btn.dataset.screen;
       showScreen(s);
       if (s === 'history') renderHistory();
-      if (s === 'pools') renderPools();
+      if (s === 'personal') renderPools();
     });
   });
 }
 
 let editingPoolIdx = null;
+let poolEditMode = 'bubble';
+let editingTermListIdx = null;
+let editingTermListGroupItemIdx = undefined;
 let physicsEngine = null;
 let physicsRafId = null;
 let physicsTermBodies = [];
+let physicsSpawnSession = 0;
 let editingTermBody = null;
 let addWeight = 1;
 
 function getEditingTerms() {
   return editingPoolIdx === -1 ? S.pools.default : S.pools.custom[editingPoolIdx].terms;
+}
+
+let poolListSort = 'weight-desc';
+let _pliDrag = null; // { termIdx, groupItemIdx? }
+
+function _termWeight(raw) {
+  if (raw?.type === 'group') return Math.max(...raw.items.map(it => (typeof it === 'object' ? it.weight : null) ?? 2));
+  return (typeof raw === 'object' ? raw.weight : null) ?? 2;
+}
+function _termLabel(raw) {
+  if (raw?.type === 'group') return raw.items[0] ? (typeof raw.items[0] === 'object' ? raw.items[0].text : raw.items[0]) : '组';
+  return typeof raw === 'object' ? raw.text : raw;
+}
+function _sortGroupItems(items) {
+  const w = it => (typeof it === 'object' ? it.weight : null) ?? 2;
+  const l = it => typeof it === 'object' ? (it.text ?? '') : (it ?? '');
+  if (poolListSort === 'weight-desc') items.sort((a, b) => w(b) - w(a));
+  else if (poolListSort === 'weight-asc') items.sort((a, b) => w(a) - w(b));
+  else if (poolListSort === 'az') items.sort((a, b) => l(a).localeCompare(l(b), 'zh'));
+}
+
+function _makePliWeightBadge(getW, setW) {
+  const badge = document.createElement('span');
+  badge.className = 'pli-weight';
+  badge.textContent = getW();
+  badge.title = '点击循环切换权重';
+  badge.addEventListener('click', e => {
+    e.stopPropagation();
+    const cur = getW();
+    setW(cur >= 3 ? 1 : cur + 1);
+    save();
+    badge.textContent = getW();
+  });
+  return badge;
+}
+
+function renderPoolList() {
+  const el = document.getElementById('pool-list-view');
+  const terms = getEditingTerms();
+
+  // Sort bar
+  el.innerHTML = '';
+  const sortBar = document.createElement('div');
+  sortBar.className = 'pli-sort-bar';
+  [{ key: 'weight-desc', text: '权重', sym: '↓' },
+   { key: 'weight-asc', text: '权重', sym: '↑' }, { key: 'az', text: 'A–Z', sym: '' }]
+    .forEach(({ key, text, sym }) => {
+      const btn = document.createElement('button');
+      btn.className = 'pli-sort-btn' + (poolListSort === key ? ' active' : '');
+      btn.innerHTML = sym ? `<span>${text}</span><span style="font-size:10px;line-height:1">${sym}</span>` : text;
+      btn.dataset.sort = key;
+      btn.addEventListener('click', () => { poolListSort = key; renderPoolList(); });
+      sortBar.appendChild(btn);
+    });
+  const refreshBtn = document.createElement('button');
+  refreshBtn.className = 'pli-sort-btn pli-icon-btn';
+  refreshBtn.textContent = '↺';
+  refreshBtn.title = '按当前排序方式重新排列';
+  refreshBtn.style.marginLeft = 'auto';
+  refreshBtn.addEventListener('click', () => renderPoolList());
+  sortBar.appendChild(refreshBtn);
+  el.appendChild(sortBar);
+
+  if (!terms.length) {
+    const empty = document.createElement('div');
+    empty.className = 'pli-empty'; empty.textContent = '还没有事件，在下方添加';
+    el.appendChild(empty); return;
+  }
+
+  const _itemW = it => (typeof it === 'object' ? it.weight : null) ?? 2;
+  const _itemL = it => typeof it === 'object' ? (it.text ?? '') : (it ?? '');
+
+  // Sort
+  let indexed = terms.map((raw, i) => ({ raw, i }));
+  if (poolListSort === 'weight-desc') indexed.sort((a, b) => _termWeight(b.raw) - _termWeight(a.raw));
+  else if (poolListSort === 'weight-asc') indexed.sort((a, b) => _termWeight(a.raw) - _termWeight(b.raw));
+  else if (poolListSort === 'az') indexed.sort((a, b) => _termLabel(a.raw).localeCompare(_termLabel(b.raw), 'zh'));
+
+  // Float groups to top
+  indexed = [...indexed.filter(({raw}) => raw?.type === 'group'), ...indexed.filter(({raw}) => raw?.type !== 'group')];
+
+  // Drag helpers
+  function setupDrop(el, onDrop) {
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('pli-drag-over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('pli-drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault(); el.classList.remove('pli-drag-over');
+      if (_pliDrag) onDrop(_pliDrag);
+    });
+  }
+
+  function mergeTerms(srcIdx, srcItemIdx, tgtIdx) {
+    const ts = getEditingTerms();
+    if (srcIdx === tgtIdx && srcItemIdx === undefined) return;
+    const srcRaw = ts[srcIdx];
+    const tgtRaw = ts[tgtIdx];
+
+    // Extract the source item
+    let srcItem;
+    if (srcItemIdx !== undefined && srcRaw?.type === 'group') {
+      srcItem = srcRaw.items.splice(srcItemIdx, 1)[0];
+      if (srcRaw.items.length === 1) { ts[srcIdx] = srcRaw.items[0]; } // collapse single-item group
+      else if (!srcRaw.items.length) { ts.splice(srcIdx, 1); if (tgtIdx > srcIdx) tgtIdx--; }
+    } else if (srcRaw?.type !== 'group') {
+      srcItem = ts.splice(srcIdx, 1)[0];
+      if (tgtIdx > srcIdx) tgtIdx--;
+    } else return;
+
+    const tgt = ts[tgtIdx];
+    if (tgt?.type === 'group') {
+      tgt.items.push(srcItem);
+      _sortGroupItems(tgt.items);
+    } else {
+      const newGroup = { type: 'group', items: [tgt, srcItem] };
+      _sortGroupItems(newGroup.items);
+      ts[tgtIdx] = newGroup;
+    }
+    save(); renderPoolList();
+  }
+
+  function ungroupItem(termIdx, itemIdx) {
+    const ts = getEditingTerms();
+    const group = ts[termIdx];
+    if (group?.type !== 'group') return;
+    const [item] = group.items.splice(itemIdx, 1);
+    if (group.items.length === 1) { ts[termIdx] = group.items[0]; ts.splice(termIdx + 1, 0, item); }
+    else if (!group.items.length) { ts[termIdx] = item; }
+    else ts.splice(termIdx + 1, 0, item);
+    save(); renderPoolList();
+  }
+
+  indexed.forEach(({ raw, i }) => {
+    if (raw?.type === 'group') {
+      // Group container
+      const groupEl = document.createElement('div');
+      groupEl.className = 'pli-group';
+      const header = document.createElement('div');
+      header.className = 'pli-group-header';
+
+      // Editable title label (long-press to edit)
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'pli-group-label';
+      titleSpan.textContent = (raw.title || '互斥组') + ' · ' + raw.items.length;
+      titleSpan.title = '长按编辑组名';
+      let _lpTimer = null;
+      titleSpan.addEventListener('pointerdown', () => {
+        _lpTimer = setTimeout(() => {
+          const inp = document.createElement('input');
+          inp.className = 'pli-group-title-input';
+          inp.value = raw.title || '互斥组';
+          inp.style.cssText = 'font-size:11px;font-weight:600;color:rgba(180,28,44,0.7);background:none;border:none;border-bottom:1px solid rgba(180,28,44,0.4);outline:none;width:6em;';
+          titleSpan.replaceWith(inp);
+          inp.focus(); inp.select();
+          const commit = () => {
+            const v = inp.value.trim();
+            raw.title = v && v !== '互斥组' ? v : '';
+            save(); renderPoolList();
+          };
+          inp.addEventListener('blur', commit);
+          inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } if (e.key === 'Escape') { inp.value = raw.title || '互斥组'; inp.blur(); } });
+        }, 500);
+      });
+      titleSpan.addEventListener('pointerup', () => clearTimeout(_lpTimer));
+      titleSpan.addEventListener('pointerleave', () => clearTimeout(_lpTimer));
+
+      // "+ 新建" button on the right
+      const addInGroupBtn = document.createElement('button');
+      addInGroupBtn.className = 'pli-sort-btn pli-icon-btn';
+      addInGroupBtn.textContent = '+';
+      addInGroupBtn.title = '在组内新建词条';
+      addInGroupBtn.style.marginLeft = 'auto';
+      addInGroupBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        editingTermListIdx = i;
+        editingTermListGroupItemIdx = -1; // -1 = new item in group
+        document.getElementById('term-edit-label').value = '';
+        document.getElementById('weight-val').textContent = '2';
+        document.getElementById('term-edit-sheet').classList.remove('hidden');
+      });
+
+      header.appendChild(titleSpan);
+      header.appendChild(addInGroupBtn);
+      header.style.cssText = 'display:flex;align-items:center;';
+      groupEl.appendChild(header);
+      setupDrop(groupEl, ({ termIdx, groupItemIdx }) => mergeTerms(termIdx, groupItemIdx, i));
+
+      // Sort items within group for display
+      const sortedItems = raw.items.map((item, j) => ({ item, j }));
+      if (poolListSort === 'weight-desc') sortedItems.sort((a, b) => _itemW(b.item) - _itemW(a.item));
+      else if (poolListSort === 'weight-asc') sortedItems.sort((a, b) => _itemW(a.item) - _itemW(b.item));
+      else if (poolListSort === 'az') sortedItems.sort((a, b) => _itemL(a.item).localeCompare(_itemL(b.item), 'zh'));
+
+      sortedItems.forEach(({ item, j }) => {
+        const text = typeof item === 'string' ? item : item.text;
+        const w = (typeof item === 'object' ? item.weight : null) ?? 2;
+        const row = document.createElement('div');
+        row.className = 'pli pli-group-item';
+        row.draggable = true;
+        row.addEventListener('dragstart', () => { _pliDrag = { termIdx: i, groupItemIdx: j }; });
+        row.addEventListener('dragend', () => { _pliDrag = null; });
+
+        const textEl = document.createElement('span'); textEl.className = 'pli-text'; textEl.textContent = text;
+        const badge = _makePliWeightBadge(
+          () => (typeof item === 'object' ? item.weight : null) ?? 2,
+          v => { if (typeof item === 'object') item.weight = v; }
+        );
+        const ungroupBtn = document.createElement('button');
+        ungroupBtn.className = 'pli-ungroup-btn'; ungroupBtn.textContent = '⏏';
+        ungroupBtn.title = '移出组'; ungroupBtn.addEventListener('click', e => { e.stopPropagation(); ungroupItem(i, j); });
+
+        row.appendChild(textEl); row.appendChild(badge); row.appendChild(ungroupBtn);
+        row.addEventListener('click', () => {
+          editingTermListIdx = i; editingTermBody = null;
+          // store group item context for save handler
+          editingTermListIdx = i; editingTermListGroupItemIdx = j;
+          document.getElementById('term-edit-label').value = text;
+          document.getElementById('weight-val').textContent = w;
+          document.getElementById('term-edit-sheet').classList.remove('hidden');
+        });
+        groupEl.appendChild(row);
+      });
+      el.appendChild(groupEl);
+    } else {
+      const text = typeof raw === 'object' ? raw.text : raw;
+      const w = (typeof raw === 'object' ? raw.weight : null) ?? 2;
+      const item = document.createElement('div');
+      item.className = 'pli'; item.draggable = true;
+      item.addEventListener('dragstart', () => { _pliDrag = { termIdx: i }; });
+      item.addEventListener('dragend', () => { _pliDrag = null; });
+      setupDrop(item, ({ termIdx, groupItemIdx }) => { if (termIdx !== i) mergeTerms(termIdx, groupItemIdx, i); });
+
+      const textEl = document.createElement('span'); textEl.className = 'pli-text'; textEl.textContent = text;
+      const badge = _makePliWeightBadge(
+        () => (typeof raw === 'object' ? raw.weight : null) ?? 2,
+        v => { if (typeof raw === 'object') { raw.weight = v; getEditingTerms()[i].weight = v; } }
+      );
+      item.appendChild(textEl); item.appendChild(badge);
+      item.addEventListener('click', () => {
+        editingTermListIdx = i; editingTermListGroupItemIdx = undefined; editingTermBody = null;
+        document.getElementById('term-edit-label').value = text;
+        document.getElementById('weight-val').textContent = w;
+        document.getElementById('term-edit-sheet').classList.remove('hidden');
+      });
+      el.appendChild(item);
+    }
+  });
+}
+
+function setPoolEditMode(mode) {
+  poolEditMode = mode;
+  if (editingPoolIdx !== null) {
+    if (!S.poolViewModes) S.poolViewModes = {};
+    S.poolViewModes[editingPoolIdx] = mode;
+    save();
+  }
+  document.getElementById('vt-bubble').classList.toggle('active', mode === 'bubble');
+  document.getElementById('vt-list').classList.toggle('active', mode === 'list');
+  const physEl = document.getElementById('physics-container');
+  const listEl = document.getElementById('pool-list-view');
+  if (mode === 'list') {
+    physEl.classList.add('hidden');
+    listEl.classList.remove('hidden');
+    if (physicsRafId) { cancelAnimationFrame(physicsRafId); physicsRafId = null; }
+    renderPoolList();
+  } else {
+    listEl.classList.add('hidden');
+    physEl.classList.remove('hidden');
+    setupPhysics();
+  }
 }
 
 function enterPoolEdit(customIdx) {
@@ -1856,7 +2358,7 @@ function enterPoolEdit(customIdx) {
 
   const nameInput = document.getElementById('edit-pool-name');
   if (customIdx === -1) {
-    nameInput.value = '默认词条池';
+    nameInput.value = '默认事件池';
     nameInput.disabled = true;
     nameInput.style.opacity = '0.5';
   } else {
@@ -1865,12 +2367,21 @@ function enterPoolEdit(customIdx) {
     nameInput.style.opacity = '';
   }
 
+  // Restore last-used view mode for this pool (default: bubble)
+  const savedMode = (S.poolViewModes || {})[customIdx] || 'bubble';
+  poolEditMode = savedMode;
+  document.getElementById('vt-bubble').classList.toggle('active', savedMode === 'bubble');
+  document.getElementById('vt-list').classList.toggle('active', savedMode === 'list');
+  document.getElementById('pool-list-view').classList.toggle('hidden', savedMode !== 'list');
+  document.getElementById('physics-container').classList.toggle('hidden', savedMode === 'list');
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-pool-edit').classList.add('active');
   document.getElementById('board-panel').classList.add('hidden');
-  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('screens').scrollTop = 0;
 
-  requestAnimationFrame(() => requestAnimationFrame(() => setupPhysics()));
+  if (savedMode === 'list') { setTimeout(renderPoolList, 50); }
+  else { setTimeout(setupPhysics, 50); }
 }
 
 function exitPoolEdit() {
@@ -1884,13 +2395,13 @@ function exitPoolEdit() {
   save();
 
   teardownPhysics();
-  document.getElementById('bottom-nav').style.display = '';
   editingPoolIdx = null;
-  showScreen('pools');
+  showScreen('personal');
   renderPools();
 }
 
 function teardownPhysics() {
+  physicsSpawnSession++;
   if (physicsRafId) { cancelAnimationFrame(physicsRafId); physicsRafId = null; }
   if (physicsEngine) { Matter.Engine.clear(physicsEngine); physicsEngine = null; }
   physicsTermBodies = [];
@@ -1899,11 +2410,11 @@ function teardownPhysics() {
 }
 
 function setupPhysics() {
-  teardownPhysics();
-
   const container = document.getElementById('physics-container');
   const W = container.offsetWidth;
   const H = container.offsetHeight;
+  if (!W || !H) { requestAnimationFrame(() => setupPhysics()); return; }
+  teardownPhysics();
   const dpr = window.devicePixelRatio || 1;
   const canvas = document.getElementById('physics-canvas');
   canvas.width = W * dpr;
@@ -1913,7 +2424,7 @@ function setupPhysics() {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  physicsEngine = Matter.Engine.create({ gravity: { y: 2 }, enableSleeping: true });
+  physicsEngine = Matter.Engine.create({ gravity: { y: 1, scale: 0.003 }, enableSleeping: true });
   const world = physicsEngine.world;
 
   const thick = 60;
@@ -1953,16 +2464,36 @@ function randomCircleColor() {
 }
 
 function addBodies(terms, W) {
-  terms.forEach((term, idx) => {
-    const r = calcRadius(term.weight);
-    const x = r + Math.random() * Math.max(0, W - 2 * r);
-    const body = Matter.Bodies.circle(x, -r - Math.random() * 120, r, {
-      restitution: 0.05, friction: 0.8, frictionAir: 0.04, sleepThreshold: 30, label: term.text,
-    });
-    body.termIdx = idx;
-    body.termColor = randomCircleColor();
-    Matter.Composite.add(physicsEngine.world, body);
-    physicsTermBodies.push({ body, termIdx: idx });
+  const entries = [];
+  terms.forEach((raw, idx) => {
+    if (raw?.type === 'group' && Array.isArray(raw.items)) {
+      raw.items.forEach((item, iIdx) => entries.push({ raw, idx, item, iIdx }));
+    } else {
+      entries.push({ raw, idx, item: null, iIdx: -1 });
+    }
+  });
+
+  const session = physicsSpawnSession;
+  entries.forEach(({ raw, idx, item, iIdx }, i) => {
+    setTimeout(() => {
+      if (!physicsEngine || physicsSpawnSession !== session) return;
+      const w = item ? ((typeof item === 'object' ? item.weight : null) ?? 2)
+                     : ((typeof raw === 'object' ? raw.weight : null) ?? 2);
+      const t = item ? (typeof item === 'string' ? item : item.text) : termText(raw);
+      const r = calcRadius(w);
+      const x = r + Math.random() * Math.max(0, W - 2 * r);
+      const body = Matter.Bodies.circle(x, -r - 5, r, {
+        restitution: 0.05, friction: 0.8, frictionAir: 0.04, sleepThreshold: 30, label: t,
+      });
+      if (iIdx >= 0) {
+        body.termIdx = idx; body.groupItemIdx = iIdx; body.termColor = randomCircleColor();
+        physicsTermBodies.push({ body, termIdx: idx, groupItemIdx: iIdx });
+      } else {
+        body.termIdx = idx; body.termColor = randomCircleColor();
+        physicsTermBodies.push({ body, termIdx: idx });
+      }
+      Matter.Composite.add(physicsEngine.world, body);
+    }, i * 80);
   });
 }
 
@@ -2037,15 +2568,20 @@ function hitTest(mx, my) {
 
 function openTermEditSheet(body) {
   editingTermBody = body;
-  const term = getEditingTerms()[body.termIdx];
-  document.getElementById('term-edit-label').value = term.text;
-  document.getElementById('weight-val').textContent = term.weight;
+  const raw = getEditingTerms()[body.termIdx];
+  const term = (body.groupItemIdx !== undefined && raw?.type === 'group')
+    ? raw.items[body.groupItemIdx]
+    : raw;
+  document.getElementById('term-edit-label').value = typeof term === 'string' ? term : term.text;
+  document.getElementById('weight-val').textContent = (typeof term === 'object' ? term.weight : null) ?? 2;
   document.getElementById('term-edit-sheet').classList.remove('hidden');
 }
 
 function closeTermEditSheet() {
   document.getElementById('term-edit-sheet').classList.add('hidden');
   editingTermBody = null;
+  editingTermListIdx = null;
+  editingTermListGroupItemIdx = undefined;
 }
 
 function addOneTerm(term, termIdx, W) {
@@ -2082,12 +2618,16 @@ function initPoolEdit() {
     const text = input.value.trim();
     if (!text) return;
     const terms = getEditingTerms();
-    if (terms.length >= 50) return;
+    // no hard cap on terms
     terms.push({ text, weight: addWeight });
     save();
     const newIdx = terms.length - 1;
-    const container = document.getElementById('physics-container');
-    addOneTerm(terms[newIdx], newIdx, container.offsetWidth);
+    if (poolEditMode === 'list') {
+      renderPoolList();
+    } else {
+      const container = document.getElementById('physics-container');
+      addOneTerm(terms[newIdx], newIdx, container.offsetWidth);
+    }
     input.value = '';
     addWeight = 1;
     document.getElementById('add-w-val').textContent = '1';
@@ -2105,51 +2645,178 @@ function initPoolEdit() {
     if (v < 3) document.getElementById('weight-val').textContent = v + 1;
   });
   document.getElementById('term-save-btn').addEventListener('click', () => {
-    if (!editingTermBody) return;
     const w = parseInt(document.getElementById('weight-val').textContent);
     const newText = document.getElementById('term-edit-label').value.trim();
+    if (poolEditMode === 'list' && editingTermListIdx !== null) {
+      const raw = getEditingTerms()[editingTermListIdx];
+      if (editingTermListGroupItemIdx === -1 && raw?.type === 'group') {
+        // New item in group
+        if (newText) { raw.items.push({ text: newText, weight: w }); _sortGroupItems(raw.items); }
+      } else {
+        const term = (editingTermListGroupItemIdx !== undefined && raw?.type === 'group')
+          ? raw.items[editingTermListGroupItemIdx] : raw;
+        if (typeof term === 'object') { term.weight = w; if (newText) term.text = newText; }
+      }
+      save();
+      closeTermEditSheet();
+      renderPoolList();
+      return;
+    }
+    if (!editingTermBody) return;
     const termIdx = editingTermBody.termIdx;
-    const term = getEditingTerms()[termIdx];
-    term.weight = w;
-    if (newText) term.text = newText;
+    const groupItemIdx = editingTermBody.groupItemIdx;
+    const raw = getEditingTerms()[termIdx];
+    const term = (groupItemIdx !== undefined && raw?.type === 'group')
+      ? raw.items[groupItemIdx] : raw;
+    if (typeof term === 'object') { term.weight = w; if (newText) term.text = newText; }
     save();
     const oldBody = editingTermBody;
     const { x, y } = oldBody.position;
     const vel = oldBody.velocity;
     Matter.Composite.remove(physicsEngine.world, oldBody);
     const r = calcRadius(w);
+    const label = typeof term === 'string' ? term : term.text;
     const newBody = Matter.Bodies.circle(x, y, r, {
-      restitution: 0.3, friction: 0.55, frictionAir: 0.018,
-      label: term.text,
+      restitution: 0.05, friction: 0.8, frictionAir: 0.04, sleepThreshold: 30, label,
     });
-    newBody.termIdx = termIdx;
+    newBody.termIdx = termIdx; newBody.groupItemIdx = groupItemIdx;
     newBody.termColor = oldBody.termColor || randomCircleColor();
     Matter.Body.setVelocity(newBody, vel);
     Matter.Composite.add(physicsEngine.world, newBody);
     const tbIdx = physicsTermBodies.findIndex(tb => tb.body === oldBody);
-    if (tbIdx >= 0) physicsTermBodies[tbIdx] = { body: newBody, termIdx };
+    if (tbIdx >= 0) physicsTermBodies[tbIdx] = { body: newBody, termIdx, groupItemIdx };
     closeTermEditSheet();
   });
 
   document.getElementById('term-delete-btn').addEventListener('click', () => {
+    if (poolEditMode === 'list' && editingTermListIdx !== null) {
+      const ts = getEditingTerms();
+      const raw = ts[editingTermListIdx];
+      if (editingTermListGroupItemIdx !== undefined && raw?.type === 'group') {
+        raw.items.splice(editingTermListGroupItemIdx, 1);
+        if (raw.items.length === 1) ts[editingTermListIdx] = raw.items[0];
+        else if (!raw.items.length) ts.splice(editingTermListIdx, 1);
+      } else {
+        ts.splice(editingTermListIdx, 1);
+      }
+      save();
+      closeTermEditSheet();
+      renderPoolList();
+      return;
+    }
     if (!editingTermBody) return;
     const termIdx = editingTermBody.termIdx;
     Matter.Composite.remove(physicsEngine.world, editingTermBody);
     physicsTermBodies = physicsTermBodies.filter(tb => tb.body !== editingTermBody);
     physicsTermBodies.forEach(tb => {
-      if (tb.body.termIdx > termIdx) {
-        tb.body.termIdx--;
-        tb.termIdx = tb.body.termIdx;
-      }
+      if (tb.body.termIdx > termIdx) { tb.body.termIdx--; tb.termIdx = tb.body.termIdx; }
     });
     getEditingTerms().splice(termIdx, 1);
     save();
     closeTermEditSheet();
   });
   document.querySelector('#term-edit-sheet .modal-overlay').addEventListener('click', closeTermEditSheet);
+
+  document.getElementById('vt-bubble').addEventListener('click', () => setPoolEditMode('bubble'));
+  document.getElementById('vt-list').addEventListener('click', () => setPoolEditMode('list'));
+}
+
+// ── Onboarding ────────────────────────────────────────────────────────────
+
+function showOnboarding() {
+  document.getElementById('onboarding').classList.remove('hidden');
+  document.querySelector('.ob-subtitle').textContent =
+    '先整理一下默认事件池，把不适合你的事件点击划掉；长按可修改内容';
+  const excluded = new Set();
+  const chips = document.getElementById('ob-chips');
+  const countEl = document.getElementById('ob-count');
+
+  function updateCount() {
+    const kept = S.pools.default.length - excluded.size;
+    countEl.textContent = `已选 ${kept} / ${S.pools.default.length} 条`;
+  }
+
+  function startChipEdit(chip, i) {
+    if (chip.classList.contains('editing')) return;
+    chip.classList.add('editing');
+    const original = chip.textContent;
+    chip.innerHTML = '';
+    const input = document.createElement('input');
+    input.className = 'ob-chip-input';
+    input.value = original;
+    chip.appendChild(input);
+    // Size input to content width
+    input.style.width = Math.max(60, input.value.length * 13) + 'px';
+    input.addEventListener('input', () => {
+      input.style.width = Math.max(60, input.value.length * 13) + 'px';
+    });
+    input.focus();
+    input.select();
+
+    const commit = () => {
+      const newText = input.value.trim() || original;
+      const term = S.pools.default[i];
+      if (typeof term === 'object') term.text = newText;
+      else S.pools.default[i] = newText;
+      chip.classList.remove('editing');
+      chip.textContent = newText;
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = original; input.blur(); }
+    });
+  }
+
+  chips.innerHTML = '';
+  S.pools.default.forEach((term, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'ob-chip';
+    chip.textContent = typeof term === 'object' ? term.text : term;
+
+    let pressTimer = null;
+    let didLongPress = false;
+
+    chip.addEventListener('pointerdown', () => {
+      didLongPress = false;
+      pressTimer = setTimeout(() => { didLongPress = true; startChipEdit(chip, i); }, 500);
+    });
+    chip.addEventListener('pointerup',     () => clearTimeout(pressTimer));
+    chip.addEventListener('pointermove',   () => clearTimeout(pressTimer));
+    chip.addEventListener('pointercancel', () => clearTimeout(pressTimer));
+    chip.addEventListener('contextmenu',   e => e.preventDefault());
+
+    chip.addEventListener('click', () => {
+      if (didLongPress || chip.classList.contains('editing')) return;
+      if (excluded.has(i)) { excluded.delete(i); chip.classList.remove('excluded'); }
+      else                 { excluded.add(i);    chip.classList.add('excluded'); }
+      updateCount();
+    });
+
+    chips.appendChild(chip);
+  });
+  updateCount();
+
+  document.getElementById('ob-done-btn').addEventListener('click', () => {
+    S.pools.default = S.pools.default.filter((_, i) => !excluded.has(i));
+    save();
+    document.getElementById('onboarding').classList.add('hidden');
+    showScreen('bingo');
+  });
+
+  document.getElementById('ob-import-btn').addEventListener('click', () => {
+    document.getElementById('ob-import-input').click();
+  });
+  document.getElementById('ob-import-input').addEventListener('change', e => {
+    if (!e.target.files[0]) return;
+    importJSON(e.target.files[0]);
+    e.target.value = '';
+    document.getElementById('onboarding').classList.add('hidden');
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  const isNewUser = !localStorage.getItem('adhd-bingo');
   load();
   archiveYesterday();
   initSetup();
@@ -2187,7 +2854,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initFileSync();
 
-  if (S.today && S.today.date === todayStr()) {
+  if (isNewUser) {
+    showScreen('bingo');
+    showOnboarding();
+  } else if (S.today && S.today.date === todayStr()) {
     showScreen('bingo');
     renderBingo();
   } else {

@@ -1,8 +1,8 @@
 {
-  "name": "ADHD Bingo",
-  "short_name": "Bingo",
+  "name": "FROG Bingo",
+  "short_name": "FROG",
   "description": "每日专注任务 Bingo 棋盘",
-  "start_url": "./adhd-bingo.html",
+  "start_url": "./frog-bingo.html",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#F2F2F7",

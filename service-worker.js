@@ -1,5 +1,7 @@
-const CACHE = 'adhd-bingo-v1';
+const CACHE = 'adhd-bingo-v2';
 const PRECACHE = [
+  './',
+  './index.html',
   './adhd-bingo.html',
   './manifest.json',
   './icons/icon.svg',

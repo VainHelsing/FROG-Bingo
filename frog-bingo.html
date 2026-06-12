@@ -850,6 +850,20 @@ body {
           <div id="ratio-rows-pools"></div>
         </div>
         <div id="pools-list"></div>
+        <div class="card">
+          <div class="section-label">偏好设置</div>
+          <div class="data-row" style="border-bottom:none">
+            <div class="data-row-info">
+              <span class="data-label">每日重置时间</span>
+              <span class="sync-status">此时间后视为新的一天</span>
+            </div>
+            <div class="alloc-ctrl">
+              <button class="alloc-btn" id="reset-hour-minus">−</button>
+              <span class="alloc-num" id="reset-hour-val" style="min-width:42px">0:00</span>
+              <button class="alloc-btn" id="reset-hour-plus">＋</button>
+            </div>
+          </div>
+        </div>
         <div class="card data-card">
           <div class="section-label">数据管理</div>
           <div id="file-sync-row" class="data-row hidden">
@@ -987,6 +1001,7 @@ function blankState() {
     today: null,
     history: [],
     totalBTB: 0,
+    resetHour: 0,
     pools: {
       default: DEFAULT_TERMS.map(t => ({ text: t, weight: 2 })),
       custom: [
@@ -1204,7 +1219,14 @@ function localDateStr(date) {
 }
 
 function todayStr() {
-  return localDateStr(new Date());
+  const now = new Date();
+  const resetHour = S.resetHour ?? 0;
+  if (resetHour > 0 && now.getHours() < resetHour) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 1);
+    return localDateStr(d);
+  }
+  return localDateStr(now);
 }
 
 function shuffle(arr) {
@@ -2099,7 +2121,7 @@ function initNav() {
       const s = btn.dataset.screen;
       showScreen(s);
       if (s === 'history') renderHistory();
-      if (s === 'personal') renderPools();
+      if (s === 'personal') { renderPools(); renderResetHour(); }
     });
   });
 }
@@ -2861,6 +2883,13 @@ function showOnboarding() {
   });
 }
 
+function renderResetHour() {
+  const h = S.resetHour ?? 0;
+  document.getElementById('reset-hour-val').textContent = `${h}:00`;
+  document.getElementById('reset-hour-minus').disabled = h <= 0;
+  document.getElementById('reset-hour-plus').disabled = h >= 6;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const isNewUser = !localStorage.getItem('frog-bingo');
   load();
@@ -2869,6 +2898,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initNav();
   initPoolEdit();
   initPoolDrag();
+
+  document.getElementById('reset-hour-minus').addEventListener('click', () => {
+    S.resetHour = Math.max(0, (S.resetHour ?? 0) - 1);
+    save(); renderResetHour();
+  });
+  document.getElementById('reset-hour-plus').addEventListener('click', () => {
+    S.resetHour = Math.min(6, (S.resetHour ?? 0) + 1);
+    save(); renderResetHour();
+  });
 
   document.getElementById('alloc-toggle').addEventListener('click', () => {
     const body = document.getElementById('alloc-body');

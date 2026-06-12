@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ADHD Bingo</title>
+  <meta name="theme-color" content="#B41C2C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bingo">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="manifest" href="manifest.json">
   <style>
 :root {
   --bg:   #F2F2F7;
@@ -208,12 +214,15 @@ body {
 }
 
 #streak-box {
-  display: flex; flex-direction: column; align-items: center;
-  margin-bottom: 18px; padding: 20px 16px;
-  background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow-card);
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 20px 16px 14px;
 }
+#streak-left { display: flex; flex-direction: column; }
 #streak-num { font-size: 52px; font-weight: 700; color: var(--text); line-height: 1; }
 #streak-label { font-size: 13px; color: var(--muted); margin-top: 5px; font-weight: 500; }
+#streak-legend { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+.sl-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+.sl-dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
 
 #heatmap-container { width: 100%; overflow: hidden; }
 
@@ -791,8 +800,16 @@ body {
       <div id="screen-history" class="screen">
         <div class="screen-header"><h2>历史记录</h2></div>
         <div id="streak-box">
-          <span id="streak-num">0</span>
-          <span id="streak-label">连续天数</span>
+          <div id="streak-left">
+            <span id="streak-num">0</span>
+            <span id="streak-label">连续天数</span>
+          </div>
+          <div id="streak-legend">
+            <div class="sl-item"><span>大事完成</span><span class="sl-dot" style="background:var(--t1)"></span></div>
+            <div class="sl-item"><span>Bingo</span><span class="sl-dot" style="background:var(--t2)"></span></div>
+            <div class="sl-item"><span>大事 Bingo</span><span class="sl-dot" style="background:var(--t3)"></span></div>
+            <div class="sl-item"><span>全大事 Bingo</span><span class="sl-dot" style="background:var(--t4)"></span></div>
+          </div>
         </div>
         <div id="heatmap-container">
           <div id="heatmap-months"></div>
@@ -802,13 +819,6 @@ body {
             </div>
             <div id="heatmap-grid"></div>
           </div>
-        </div>
-        <div class="legend">
-          <div class="legend-item"><span class="ldot t0"></span>未开始</div>
-          <div class="legend-item"><span class="ldot t1"></span>完成大事</div>
-          <div class="legend-item"><span class="ldot t2"></span>普通 Bingo</div>
-          <div class="legend-item"><span class="ldot t3"></span>大事 Bingo</div>
-          <div class="legend-item"><span class="ldot t4"></span>全完成</div>
         </div>
         <div class="mock-row">
           <button id="mock-data-btn" class="text-btn mock-btn">⚙ 生成模拟数据</button>
@@ -2864,6 +2874,11 @@ document.addEventListener('DOMContentLoaded', () => {
     showScreen('bingo');
   }
 });
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js');
+    }
   </script>
 </body>
 </html>

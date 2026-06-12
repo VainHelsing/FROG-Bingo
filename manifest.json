@@ -1,0 +1,24 @@
+{
+  "name": "ADHD Bingo",
+  "short_name": "Bingo",
+  "description": "每日专注任务 Bingo 棋盘",
+  "start_url": "./adhd-bingo.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F2F2F7",
+  "theme_color": "#B41C2C",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

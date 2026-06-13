@@ -744,6 +744,72 @@ body {
   #streak-num       { font-size: clamp(38px, 1.5vw + 19px, 52px); }
   #streak-label     { font-size: clamp(11px, 0.3vw + 7px, 13px); }
 }
+
+/* ── Welcome screen ── */
+.welcome-overlay {
+  position: fixed; inset: 0; z-index: 400;
+  background: var(--bg); overflow-y: auto;
+  display: flex; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.welcome-inner {
+  width: min(100%, 400px);
+  padding: 72px 28px 80px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.frog-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  width: 100%; margin-bottom: 40px; gap: 4px;
+}
+.frog-col {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.frog-ltr {
+  font-size: clamp(60px, 17vw, 80px); font-weight: 700;
+  color: var(--text); line-height: 1;
+  animation: wlFloat .9s cubic-bezier(.22,1,.36,1) both;
+}
+.frog-ltr .dot { color: var(--accent); }
+.frog-col:nth-child(1) .frog-ltr { animation-delay: .15s; }
+.frog-col:nth-child(2) .frog-ltr { animation-delay: .55s; }
+.frog-col:nth-child(3) .frog-ltr { animation-delay: .95s; }
+.frog-col:nth-child(4) .frog-ltr { animation-delay: 1.35s; }
+@keyframes wlFloat {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.frog-word {
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  letter-spacing: .3px; opacity: 0;
+}
+.frog-word.reveal { animation: wlFloat .4s cubic-bezier(.22,1,.36,1) both; }
+
+#welcome-dive {
+  width: 100%; opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+#welcome-dive.reveal { opacity: 1; pointer-events: auto; }
+
+.welcome-readme {
+  width: 100%; opacity: 0; pointer-events: none;
+  margin-bottom: 28px;
+}
+.welcome-readme.reveal { animation: wlFloat .5s ease both; pointer-events: auto; }
+.readme-para {
+  font-size: 13px; color: var(--muted); line-height: 1.8;
+  margin-bottom: 20px;
+}
+.readme-def {
+  margin-bottom: 16px;
+}
+.readme-def-head {
+  font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px;
+}
+.readme-def-head em { color: var(--accent); font-style: normal; }
+.readme-def p {
+  font-size: 13px; color: var(--muted); line-height: 1.7; margin: 0;
+}
+#welcome-start { width: 100%; opacity: 0; pointer-events: none; }
+#welcome-start.reveal { animation: wlFloat .4s ease both; pointer-events: auto; }
   </style>
 </head>
 <body>
@@ -926,6 +992,52 @@ body {
 
   </div>
 
+  <!-- Welcome screen (new users only, before onboarding) -->
+  <div id="welcome" class="welcome-overlay hidden">
+    <div class="welcome-inner">
+      <div class="frog-grid">
+        <div class="frog-col">
+          <span class="frog-ltr">F<span class="dot">.</span></span>
+          <span class="frog-word">Forgive</span>
+        </div>
+        <div class="frog-col">
+          <span class="frog-ltr">R<span class="dot">.</span></span>
+          <span class="frog-word">Relax</span>
+        </div>
+        <div class="frog-col">
+          <span class="frog-ltr">O<span class="dot">.</span></span>
+          <span class="frog-word">Onward</span>
+        </div>
+        <div class="frog-col">
+          <span class="frog-ltr">G<span class="dot">.</span></span>
+          <span class="frog-word">Grow</span>
+        </div>
+      </div>
+      <button id="welcome-dive" class="primary-btn">跳进池塘</button>
+      <div id="welcome-readme" class="welcome-readme">
+        <p class="readme-para">FROG 的典故是一个著名的时间管理理论：「吃掉那只青蛙」。在这个理论里，困难的任务就像吃青蛙，不是不吃而是缓吃，慢吃，有节奏地吃。让有准备的人先吃，让心态成熟的人先吃，才能先吃带动后吃。</p>
+        <p class="readme-para">青蛙理论之一就是每天决定要吃哪三只大青蛙，吃完你就可以 call it a day 了。我很认同这个概念，很需要一天完成三件事的成就感，剩下的只有一个问题：能不能不吃青蛙。青蛙，又可爱又无害的小东西，我吃它作甚！最后强行把 FROG 作为首字母凑了四个单词。</p>
+        <div class="readme-def">
+          <div class="readme-def-head"><em>F</em>orgive</div>
+          <p>放过你自己吧，你脑子有病。</p>
+        </div>
+        <div class="readme-def">
+          <div class="readme-def-head"><em>R</em>elax</div>
+          <p>做一点就可以躺了，加油。</p>
+        </div>
+        <div class="readme-def">
+          <div class="readme-def-head"><em>O</em>nward</div>
+          <p>总之，我们走在自己的方向上。虽然一直有猪打你，但这里是野炊，你走的方向都有意义。</p>
+        </div>
+        <div class="readme-def">
+          <div class="readme-def-head"><em>G</em>row</div>
+          <p>我也只是个几岁的成年人。She's young but she's daily growing.</p>
+        </div>
+      </div>
+      <button id="welcome-start" class="primary-btn">整理我的事件库 →</button>
+    </div>
+  </div>
+
   <!-- Onboarding overlay (new users only) -->
   <div id="onboarding" class="ob-overlay hidden">
     <div class="ob-content">
@@ -964,36 +1076,36 @@ body {
 'use strict';
 
 const DEFAULT_TERMS = [
-  '分心后五分钟内拉回注意力',
-  '喝六杯水',
-  '按时吃两顿饭',
-  '完成一件拖延已久的小任务',
-  '刷两次牙',
-  '散步一小时',
+  '分心后5分钟内拉回注意力',
+  '喝6杯水',
+  '按时吃2顿饭',
+  '找出1件拖延很久的任务并完成',
+  '刷2次牙',
+  '散步1小时',
   '没有开启新坑',
   '在午夜之前整理桌面或抽屉',
-  '及时回复一条重要消息',
+  '及时回复1条重要消息',
   '运动 30 分钟',
   '消耗部分囤积物品',
-  '做 brain dump',
-  '把一件重要任务拆成小步骤，并推进',
-  '完成一件两分钟内的小任务',
+  '做brain dump',
+  '把1件重要任务拆成小步骤，并推进',
+  '重启1个曾经感兴趣的项目',
   '午夜前洗澡',
   '睡前玩电子设备不超过30分钟',
   '专注45分钟不看手机',
-  '完成自己设定的 SOP',
+  '完成1个自己设定的SOP',
   '没丢东西',
   '没忘带钥匙钱包手机',
   '及时设置提醒，不靠记忆',
-  '联系一个很久没联系的朋友',
+  '联系1个很久没联系的朋友',
   '睡够7小时',
-  '刷 SNS 时长不超过 1 小时',
+  '刷SNS时长不超过1小时',
   '精力高峰时段优先完成了重要事项',
   '做日/周/月复盘',
   '写 done list',
-  '准时开始一件事',
+  '准时开始1件事',
   '做间歇式记录',
-  '推进自己曽感兴趣的项目',
+  '做情绪觉察并记录',
 ];
 
 function blankState() {
@@ -2789,6 +2901,49 @@ function initPoolEdit() {
   document.getElementById('vt-list').addEventListener('click', () => setPoolEditMode('list'));
 }
 
+// ── Welcome screen ────────────────────────────────────────────────────────
+
+function showWelcome(onDone) {
+  const overlay = document.getElementById('welcome');
+  overlay.classList.remove('hidden');
+  overlay.style.cursor = 'pointer';
+
+  // 第一次点击：浮现四个单词，单词出完后显示按钮
+  function onFirstClick() {
+    overlay.removeEventListener('click', onFirstClick);
+    overlay.style.cursor = 'default';
+    overlay.querySelectorAll('.frog-word').forEach((w, i) => {
+      w.style.animationDelay = `${i * 0.12}s`;
+      w.classList.add('reveal');
+    });
+    setTimeout(() => {
+      document.getElementById('welcome-dive').classList.add('reveal');
+    }, 650);
+  }
+  overlay.addEventListener('click', onFirstClick);
+
+  // 点击「跳进池塘」：隐藏按钮，展示 readme + 开始按钮
+  document.getElementById('welcome-dive').addEventListener('click', e => {
+    e.stopPropagation();
+    const diveBtn = document.getElementById('welcome-dive');
+    diveBtn.style.opacity = '0';
+    diveBtn.style.pointerEvents = 'none';
+
+    const readme = document.getElementById('welcome-readme');
+    readme.style.animationDelay = '0s';
+    readme.classList.add('reveal');
+
+    const startBtn = document.getElementById('welcome-start');
+    startBtn.style.animationDelay = '.5s';
+    startBtn.classList.add('reveal');
+  });
+
+  document.getElementById('welcome-start').addEventListener('click', () => {
+    overlay.classList.add('hidden');
+    onDone();
+  });
+}
+
 // ── Onboarding ────────────────────────────────────────────────────────────
 
 function showOnboarding() {
@@ -2940,7 +3095,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (isNewUser) {
     showScreen('bingo');
-    showOnboarding();
+    showWelcome(() => showOnboarding());
   } else if (S.today && S.today.date === todayStr()) {
     showScreen('bingo');
     renderBingo();

@@ -635,6 +635,16 @@ body {
   min-width: 60px; max-width: 220px;
 }
 .ob-count { font-size: 12px; color: var(--muted); text-align: right; margin-bottom: 24px; }
+.ob-add-chip {
+  padding: 7px 14px; border-radius: 20px;
+  border: 1.5px dashed var(--sep);
+  background: transparent;
+  font-size: 13px; color: var(--muted);
+  cursor: pointer; user-select: none;
+  display: inline-flex; align-items: center; gap: 4px;
+  transition: border-color .15s, color .15s;
+}
+.ob-add-chip:hover { border-color: var(--accent); color: var(--accent); }
 .ob-import-btn { color: var(--muted); font-size: 13px; margin-top: 12px; text-align: center; width: 100%; }
 
 .hidden { display: none !important; }
@@ -1091,7 +1101,7 @@ body {
         <hr class="readme-hr">
         <p class="readme-para">Bingo 部分，那就是普通的 Bingo。然而其中还是有本人的一些小巧思：</p>
         <ol class="readme-list">
-          <li>由于最初设计时只考虑了本人的情况，因此默认事件池的范围很狭窄，基本上只服务于 ADHD-I 型群体。好在现在的默认词条可以直接修改删除，你可以自行修改或提高这些词条的难度。</li>
+          <li>由于最初设计时只考虑了本人的情况，因此默认事件池的范围很狭窄，基本上只服务于 ADHD-I 型群体。不过现在的默认事件池已开放编辑，你可以自行修改或删除词条，也可以添加自己想要的词条——就在下一页。</li>
           <li>在完成一些 Bingo 后，所有人都可以获得自定义事件池，你可以设定从不同事件池中抽取的词条数量，从而在不知道干啥的一天中找到一点方向（参考用例：将一个自定义池设定为所有我没看完的书、影视作品、没打完的游戏）。</li>
           <li>随机生成的 Bingo 往往存在一些相对轻松的达成路线，为此引入了词条的任务难度（最高为 3），以比较简陋的方式实现了各路线之间的相对平衡。任务难度也完全可定义和编辑，便于你自行决定每个词条实现的难度。</li>
           <li>考虑到"运动 30 分钟"和"运动 1 小时"完全可以以不同难度的形式同时存在于事件池中，但不应在 Bingo 上同时出现，为此引入了互斥组功能，这样抽取的时候会避开同组的词条。</li>
@@ -1180,7 +1190,7 @@ body {
 'use strict';
 
 const DEFAULT_TERMS = [
-  '分心后5分钟内拉回注意力',
+  '从无关主线的超专注中成功抽身',
   '喝6杯水',
   '按时吃2顿饭',
   '找出1件拖延很久的任务并完成',
@@ -3108,15 +3118,9 @@ function showOnboarding() {
     });
   }
 
-  chips.innerHTML = '';
-  S.pools.default.forEach((term, i) => {
-    const chip = document.createElement('div');
-    chip.className = 'ob-chip';
-    chip.textContent = typeof term === 'object' ? term.text : term;
-
+  function attachChipBehavior(chip, i) {
     let pressTimer = null;
     let didLongPress = false;
-
     chip.addEventListener('pointerdown', () => {
       didLongPress = false;
       pressTimer = setTimeout(() => { didLongPress = true; startChipEdit(chip, i); }, 500);
@@ -3125,16 +3129,65 @@ function showOnboarding() {
     chip.addEventListener('pointermove',   () => clearTimeout(pressTimer));
     chip.addEventListener('pointercancel', () => clearTimeout(pressTimer));
     chip.addEventListener('contextmenu',   e => e.preventDefault());
-
     chip.addEventListener('click', () => {
       if (didLongPress || chip.classList.contains('editing')) return;
       if (excluded.has(i)) { excluded.delete(i); chip.classList.remove('excluded'); }
       else                 { excluded.add(i);    chip.classList.add('excluded'); }
       updateCount();
     });
+  }
 
+  chips.innerHTML = '';
+  S.pools.default.forEach((term, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'ob-chip';
+    chip.textContent = typeof term === 'object' ? term.text : term;
+    attachChipBehavior(chip, i);
     chips.appendChild(chip);
   });
+
+  // 添加词条按钮
+  const addBtn = document.createElement('div');
+  addBtn.className = 'ob-add-chip';
+  addBtn.innerHTML = '<span style="font-size:15px;line-height:1">+</span><span>添加</span>';
+  chips.appendChild(addBtn);
+
+  addBtn.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = '输入词条…';
+    input.className = 'ob-chip-input';
+    input.style.width = '80px';
+
+    const tempChip = document.createElement('div');
+    tempChip.className = 'ob-chip editing';
+    tempChip.appendChild(input);
+    chips.insertBefore(tempChip, addBtn);
+    input.focus();
+
+    input.addEventListener('input', () => {
+      input.style.width = Math.max(80, input.value.length * 13) + 'px';
+    });
+    const commit = () => {
+      const text = input.value.trim();
+      if (text) {
+        const idx = S.pools.default.length;
+        S.pools.default.push(text);
+        tempChip.classList.remove('editing');
+        tempChip.textContent = text;
+        attachChipBehavior(tempChip, idx);
+        updateCount();
+      } else {
+        tempChip.remove();
+      }
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = ''; input.blur(); }
+    });
+  });
+
   updateCount();
 
   document.getElementById('ob-done-btn').addEventListener('click', () => {

@@ -1034,7 +1034,7 @@ body {
           <p>我也只是个几岁的成年人。She's young but she's daily growing.</p>
         </div>
       </div>
-      <button id="welcome-start" class="primary-btn">整理我的事件库 →</button>
+      <button id="welcome-start" class="primary-btn">定义我的事件池 →</button>
     </div>
   </div>
 
@@ -2926,8 +2926,7 @@ function showWelcome(onDone) {
   document.getElementById('welcome-dive').addEventListener('click', e => {
     e.stopPropagation();
     const diveBtn = document.getElementById('welcome-dive');
-    diveBtn.style.opacity = '0';
-    diveBtn.style.pointerEvents = 'none';
+    diveBtn.style.display = 'none';
 
     const readme = document.getElementById('welcome-readme');
     readme.style.animationDelay = '0s';

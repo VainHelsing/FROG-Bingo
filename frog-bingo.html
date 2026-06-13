@@ -2219,7 +2219,7 @@ function buildPoolCard(container, { id, title, terms, locked, customIdx }) {
   head.addEventListener('click', () => {
     body.classList.toggle('open');
     chev.classList.toggle('open');
-    if (body.classList.contains('open')) populatePoolBody(body, { locked, readonly, terms, customIdx, id });
+    if (body.classList.contains('open')) populatePoolBody(body, { locked, terms, customIdx, id });
   });
 
   container.appendChild(card);

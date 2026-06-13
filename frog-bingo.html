@@ -239,7 +239,7 @@ body {
 .sl-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
 .sl-dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
 
-#heatmap-container { width: 100%; overflow: hidden; }
+#heatmap-container { width: 100%; overflow: hidden; margin-top: 10px; }
 
 #heatmap-months {
   display: flex;
@@ -732,7 +732,7 @@ body {
     padding-bottom: 0 !important;
   }
 
-  .screen { flex-shrink: 0; }
+  .screen { flex-shrink: 0; padding-bottom: 24px; }
 
   #board-panel {
     flex: 1;
@@ -933,10 +933,10 @@ body {
             <span id="streak-label">连续天数</span>
           </div>
           <div id="streak-legend">
-            <div class="sl-item"><span>大事完成</span><span class="sl-dot" style="background:var(--t1)"></span></div>
-            <div class="sl-item"><span>Bingo</span><span class="sl-dot" style="background:var(--t2)"></span></div>
-            <div class="sl-item"><span>大事 Bingo</span><span class="sl-dot" style="background:var(--t3)"></span></div>
-            <div class="sl-item"><span>全大事 Bingo</span><span class="sl-dot" style="background:var(--t4)"></span></div>
+            <div class="sl-item"><span>25%</span><span class="sl-dot" style="background:var(--t1)"></span></div>
+            <div class="sl-item"><span>50%</span><span class="sl-dot" style="background:var(--t2)"></span></div>
+            <div class="sl-item"><span>75%</span><span class="sl-dot" style="background:var(--t3)"></span></div>
+            <div class="sl-item"><span>100%</span><span class="sl-dot" style="background:var(--t4)"></span></div>
           </div>
         </div>
         <div id="heatmap-container">
@@ -947,6 +947,9 @@ body {
             </div>
             <div id="heatmap-grid"></div>
           </div>
+        </div>
+        <div style="text-align:center; margin: 14px 0 4px;">
+          <button id="tier-rules-btn" style="background:none; border:none; font-size:11px; color:var(--muted); opacity:0.6; cursor:pointer; padding:4px 8px;">评分规则</button>
         </div>
       </div>
 
@@ -1102,6 +1105,33 @@ body {
       <button id="ob-done-btn" class="primary-btn">完成配置，开始使用</button>
       <button id="ob-import-btn" class="text-btn ob-import-btn">我是老用户，跳过并恢复备份</button>
       <input type="file" id="ob-import-input" accept=".json" style="display:none">
+    </div>
+  </div>
+
+  <!-- Tier rules modal -->
+  <div id="tier-rules-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-sheet" style="padding: 24px 20px 36px; display: flex; flex-direction: column; gap: 14px; max-height: 85vh; overflow-y: auto;">
+      <p style="font-size:15px; font-weight:600; color:var(--text); margin-bottom:14px;">热力图评分规则</p>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+          <span style="width:13px; height:13px; border-radius:3px; background:var(--t1); flex-shrink:0; margin-top:2px;"></span>
+          <span style="font-size:13px; color:var(--muted); line-height:1.5;">25% — 大事部分完成 · 无 Bingo，或 大事未完成 · 有 Bingo</span>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+          <span style="width:13px; height:13px; border-radius:3px; background:var(--t2); flex-shrink:0; margin-top:2px;"></span>
+          <span style="font-size:13px; color:var(--muted); line-height:1.5;">50% — 大事完成 · 无 Bingo，或 大事部分完成 · 有 Bingo</span>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+          <span style="width:13px; height:13px; border-radius:3px; background:var(--t3); flex-shrink:0; margin-top:2px;"></span>
+          <span style="font-size:13px; color:var(--muted); line-height:1.5;">75% — 大事完成 · 有 Bingo</span>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+          <span style="width:13px; height:13px; border-radius:3px; background:var(--t4); flex-shrink:0; margin-top:2px;"></span>
+          <span style="font-size:13px; color:var(--muted); line-height:1.5;">100% — 大事完成 · 有 Bingo，且至少一件大事在 Bingo 连线上</span>
+        </div>
+      </div>
+      <button class="text-btn tier-rules-close" style="color:var(--muted); margin-top:4px;">关闭</button>
     </div>
   </div>
 
@@ -1642,23 +1672,24 @@ function completedLines(board, n) {
 }
 
 function detectTier(board, n, btPositions) {
-  const lines = completedLines(board, n);
-  const btSet = new Set(btPositions);
-
+  const anyBTDone = btPositions.some(i => board[i].completed);
   const allBTDone = btPositions.every(i => board[i].completed);
+  const lines = completedLines(board, n);
   const anyLine = lines.length > 0;
-  const btBingoLines = lines.filter(l => l.some(i => btSet.has(i)));
-  const allBTHaveLine = btPositions.length > 0 &&
-    btPositions.every(btp => lines.some(l => l.includes(btp)));
 
-  if (allBTHaveLine) return 4;
-  if (btBingoLines.length > 0) return 3;
-  if (anyLine) return 2;
-  if (allBTDone) return 1;
-  return 0;
+  if (!anyBTDone && !anyLine) return 0;
+
+  if (allBTDone) {
+    if (!anyLine) return 2;
+    const btSet = new Set(btPositions);
+    return lines.some(l => l.some(i => btSet.has(i))) ? 4 : 3;
+  }
+
+  // 未全成：半成+有Bingo=2，其余（半成无Bingo或0件有Bingo）=1
+  return (anyBTDone && anyLine) ? 2 : 1;
 }
 
-const TIER_LABELS = ['', '完成了今天的大事 ✓', '普通 Bingo！', '大事 Bingo！', '🎉 大事全 Bingo！'];
+const TIER_LABELS = ['', 'Bingo ✓', '大事全部完成 ✓', '大事完成 + Bingo ✓', '🎉 大事 Bingo！'];
 
 function checkUnlocks() {
   if (!S.today) return;
@@ -3132,6 +3163,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('#bingo-tip .bingo-tip-close').addEventListener('click', () => {
     localStorage.setItem('bingoTipDone', '1');
     document.getElementById('bingo-tip').classList.add('hidden');
+  });
+
+  document.getElementById('tier-rules-btn').addEventListener('click', () => {
+    document.getElementById('tier-rules-modal').classList.remove('hidden');
+  });
+  document.querySelector('#tier-rules-modal .modal-overlay').addEventListener('click', () => {
+    document.getElementById('tier-rules-modal').classList.add('hidden');
+  });
+  document.querySelector('.tier-rules-close').addEventListener('click', () => {
+    document.getElementById('tier-rules-modal').classList.add('hidden');
   });
 
   document.getElementById('regret-btn').addEventListener('click', () => {

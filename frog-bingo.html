@@ -640,6 +640,9 @@ body {
 .hidden { display: none !important; }
 
 @media (min-width: 768px) {
+  /* 桌面：spacer 高度由 JS 动态计算，默认 0 */
+  .welcome-spacer { height: 0; }
+
   body {
     max-width: none;
     overflow-x: hidden;
@@ -813,16 +816,22 @@ body {
 }
 .frog-word.reveal { animation: wlFloat .4s cubic-bezier(.22,1,.36,1) both; }
 
+.welcome-spacer {
+  height: clamp(0px, 35vh, 260px);
+  flex-shrink: 0;
+  transition: height 0.65s cubic-bezier(.22,1,.36,1);
+}
+.welcome-spacer.collapsed { height: 0; }
 #welcome-dive {
   width: min(100%, 320px); opacity: 0; pointer-events: none; transition: opacity .3s;
 }
 #welcome-dive.reveal { opacity: 1; pointer-events: auto; }
 
 .welcome-readme {
-  width: 100%; opacity: 0; pointer-events: none;
+  width: 100%; display: none; pointer-events: none;
   margin-bottom: 28px;
 }
-.welcome-readme.reveal { animation: wlFloat .5s ease both; pointer-events: auto; }
+.welcome-readme.reveal { display: block; animation: wlFloat .5s ease both; pointer-events: auto; }
 .readme-para {
   font-size: 13px; color: var(--muted); line-height: 1.8;
   margin-bottom: 20px;
@@ -845,8 +854,8 @@ body {
   padding-left: 18px; margin-bottom: 20px;
 }
 .readme-list li { margin-bottom: 10px; }
-#welcome-start { width: min(100%, 320px); opacity: 0; pointer-events: none; margin-bottom: 60px; }
-#welcome-start.reveal { animation: wlFloat .4s ease both; pointer-events: auto; }
+#welcome-start { width: min(100%, 320px); display: none; pointer-events: none; margin-bottom: 60px; }
+#welcome-start.reveal { display: block; animation: wlFloat .4s ease both; pointer-events: auto; }
   </style>
 </head>
 <body>
@@ -1039,6 +1048,7 @@ body {
   <!-- Welcome screen (new users only, before onboarding) -->
   <div id="welcome" class="welcome-overlay hidden">
     <div class="welcome-inner">
+      <div id="welcome-spacer" class="welcome-spacer"></div>
       <div class="frog-grid">
         <div class="frog-col">
           <span class="frog-ltr">F<span class="dot">.</span></span>
@@ -2993,10 +3003,24 @@ function initPoolEdit() {
 
 // ── Welcome screen ────────────────────────────────────────────────────────
 
+function centerWelcomeFrog() {
+  if (window.innerWidth < 768) return;
+  const spacer = document.getElementById('welcome-spacer');
+  if (!spacer || spacer.style.height === '0px') return;
+  const grid = document.querySelector('.frog-grid');
+  const paddingTop = 72;
+  const spacerH = Math.max(0, window.innerHeight / 2 - paddingTop - grid.offsetHeight / 2);
+  spacer.style.transition = 'none';
+  spacer.style.height = spacerH + 'px';
+  // re-enable transition after layout settles
+  requestAnimationFrame(() => { spacer.style.transition = ''; });
+}
+
 function showWelcome(onDone) {
   const overlay = document.getElementById('welcome');
   overlay.classList.remove('hidden');
   overlay.style.cursor = 'pointer';
+  requestAnimationFrame(centerWelcomeFrog);
 
   // 第一次点击：浮现四个单词，单词出完后显示按钮
   function onFirstClick() {
@@ -3015,16 +3039,20 @@ function showWelcome(onDone) {
   // 点击「跳进池塘」：隐藏按钮，展示 readme + 开始按钮
   document.getElementById('welcome-dive').addEventListener('click', e => {
     e.stopPropagation();
-    const diveBtn = document.getElementById('welcome-dive');
-    diveBtn.style.display = 'none';
+    document.getElementById('welcome-dive').style.display = 'none';
+    document.getElementById('welcome-spacer').style.height = '0';
 
-    const readme = document.getElementById('welcome-readme');
-    readme.style.animationDelay = '0s';
-    readme.classList.add('reveal');
+    setTimeout(() => {
+      const readme = document.getElementById('welcome-readme');
+      readme.style.display = '';
+      readme.style.animationDelay = '0s';
+      readme.classList.add('reveal');
 
-    const startBtn = document.getElementById('welcome-start');
-    startBtn.style.animationDelay = '.5s';
-    startBtn.classList.add('reveal');
+      const startBtn = document.getElementById('welcome-start');
+      startBtn.style.display = '';
+      startBtn.style.animationDelay = '.5s';
+      startBtn.classList.add('reveal');
+    }, 400);
   });
 
   document.getElementById('welcome-start').addEventListener('click', () => {
@@ -3251,6 +3279,7 @@ document.getElementById('connect-file-btn').addEventListener('click', connectFil
     showScreen('bingo');
   }
 });
+  window.addEventListener('resize', centerWelcomeFrog);
   </script>
   <script>
     if ('serviceWorker' in navigator) {

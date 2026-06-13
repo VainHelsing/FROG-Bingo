@@ -122,7 +122,9 @@ body {
   font-size: 14px; font-weight: 500; cursor: pointer; padding: 5px 0; display: block; margin-top: 4px;
 }
 
-#big-tasks-header { padding: 16px 16px 0; }
+#big-tasks-header { padding: 0; }
+.bt-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.regret-btn { font-size: 12px; color: var(--muted); opacity: 0.7; padding: 0; }
 #big-tasks-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
 
 .bt-item {
@@ -281,9 +283,20 @@ body {
 .ldot.t3 { background: var(--t3); } .ldot.t4 { background: var(--t4); }
 
 .redraw-btn { color: var(--muted); font-size: 13px; text-align: center; width: 100%; padding: 4px 0 8px; }
+.regret-btn { color: var(--muted); font-size: 12px; text-align: right; padding: 2px 0 10px; opacity: 0.7; }
+.bingo-tip {
+  position: relative; margin: 0 0 8px;
+  padding: 10px 32px 10px 14px;
+  background: var(--bg2); border-radius: var(--radius-xs);
+  font-size: 12px; color: var(--muted); line-height: 1.7;
+}
+.bingo-tip-close {
+  position: absolute; top: 7px; right: 10px;
+  background: none; border: none; color: var(--muted);
+  font-size: 16px; line-height: 1; cursor: pointer; padding: 0 2px;
+}
+.bingo-tip-close:hover { color: var(--text2); }
 
-.mock-row { display: flex; gap: 16px; margin-top: 4px; }
-.mock-btn { color: var(--muted); font-size: 12px; margin-top: 0; }
 .clear-btn { color: var(--accent) !important; }
 
 /* ── Data management card ── */
@@ -504,6 +517,21 @@ body {
 .pli-ungroup-btn:hover { color: var(--accent); opacity: 1; }
 .pli-drag-over { background: color-mix(in srgb, var(--accent) 8%, transparent); outline: 1px dashed var(--accent); }
 .pli[draggable], .pli-group-item[draggable] { cursor: grab; }
+.pli-tip {
+  margin: 10px 12px 4px;
+  padding: 11px 14px;
+  background: var(--bg2);
+  border-radius: var(--radius-xs);
+  position: relative;
+}
+.pli-tip-close {
+  position: absolute; top: 8px; right: 10px;
+  background: none; border: none; color: var(--muted);
+  font-size: 16px; line-height: 1; cursor: pointer; padding: 0 2px;
+}
+.pli-tip-close:hover { color: var(--text2); }
+.pli-tip-row { display: flex; align-items: baseline; gap: 6px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+.pli-tip-key { font-weight: 600; color: var(--text2); flex-shrink: 0; }
 .icon-btn {
   width: 34px; height: 34px; border-radius: 50%; border: none;
   background: var(--bg2); color: var(--text2); font-size: 16px;
@@ -749,12 +777,13 @@ body {
 .welcome-overlay {
   position: fixed; inset: 0; z-index: 400;
   background: var(--bg); overflow-y: auto;
-  display: flex; justify-content: center;
+  -webkit-overflow-scrolling: touch;
   -webkit-tap-highlight-color: transparent;
 }
 .welcome-inner {
-  width: min(100%, 400px);
-  padding: 72px 28px 80px;
+  width: min(92%, 680px);
+  margin: 0 auto;
+  padding: 72px 28px 120px;
   display: flex; flex-direction: column; align-items: center;
 }
 .frog-grid {
@@ -785,7 +814,7 @@ body {
 .frog-word.reveal { animation: wlFloat .4s cubic-bezier(.22,1,.36,1) both; }
 
 #welcome-dive {
-  width: 100%; opacity: 0; pointer-events: none; transition: opacity .3s;
+  width: min(100%, 320px); opacity: 0; pointer-events: none; transition: opacity .3s;
 }
 #welcome-dive.reveal { opacity: 1; pointer-events: auto; }
 
@@ -808,7 +837,15 @@ body {
 .readme-def p {
   font-size: 13px; color: var(--muted); line-height: 1.7; margin: 0;
 }
-#welcome-start { width: 100%; opacity: 0; pointer-events: none; }
+.readme-hr {
+  border: none; border-top: 1px solid var(--sep); margin: 24px 0;
+}
+.readme-list {
+  font-size: 13px; color: var(--muted); line-height: 1.8;
+  padding-left: 18px; margin-bottom: 20px;
+}
+.readme-list li { margin-bottom: 10px; }
+#welcome-start { width: min(100%, 320px); opacity: 0; pointer-events: none; margin-bottom: 60px; }
 #welcome-start.reveal { animation: wlFloat .4s ease both; pointer-events: auto; }
   </style>
 </head>
@@ -871,11 +908,19 @@ body {
       <!-- Bingo controls -->
       <div id="screen-bingo" class="screen">
         <div id="big-tasks-header">
+          <div class="screen-header bt-title-row">
+            <h2>今日大事</h2>
+            <button id="regret-btn" class="text-btn regret-btn hidden">后悔药</button>
+          </div>
           <div id="big-tasks-list"></div>
         </div>
         <div id="tier-bar"><div id="tier-fill"></div></div>
         <div id="tier-label"></div>
         <button id="redraw-btn" class="text-btn redraw-btn hidden">↻ 重新抽取</button>
+        <div id="bingo-tip" class="bingo-tip hidden">
+          <button class="bingo-tip-close" title="不再显示">×</button>
+          如果觉得抽取的词条不满意，可以点击重新抽取。但是一旦点击完成了某一词条，就不可以重抽了哦。
+        </div>
         <div id="unlock-banner" class="banner hidden"></div>
       </div>
 
@@ -902,10 +947,6 @@ body {
             </div>
             <div id="heatmap-grid"></div>
           </div>
-        </div>
-        <div class="mock-row">
-          <button id="mock-data-btn" class="text-btn mock-btn">⚙ 生成模拟数据</button>
-          <button id="clear-mock-btn" class="text-btn mock-btn clear-btn">✕ 清除模拟数据</button>
         </div>
       </div>
 
@@ -1015,8 +1056,9 @@ body {
       </div>
       <button id="welcome-dive" class="primary-btn">跳进池塘</button>
       <div id="welcome-readme" class="welcome-readme">
-        <p class="readme-para">FROG 的典故是一个著名的时间管理理论：「吃掉那只青蛙」。在这个理论里，困难的任务就像吃青蛙，不是不吃而是缓吃，慢吃，有节奏地吃。让有准备的人先吃，让心态成熟的人先吃，才能先吃带动后吃。</p>
-        <p class="readme-para">青蛙理论之一就是每天决定要吃哪三只大青蛙，吃完你就可以 call it a day 了。我很认同这个概念，很需要一天完成三件事的成就感，剩下的只有一个问题：能不能不吃青蛙。青蛙，又可爱又无害的小东西，我吃它作甚！最后强行把 FROG 作为首字母凑了四个单词。</p>
+        <p class="readme-para">你好，欢迎使用 FROG Bingo。本项目的设计主旨是把"每天最重要的三件大事"和生活 Bingo 小游戏结合起来，因此就像标题一样，主要分为两个部分：FROG，和 Bingo。</p>
+        <p class="readme-para">FROG 部分来自一个著名的时间管理理论："吃掉那只青蛙"。在这个理论里，困难的任务就像吃青蛙，而你每天只需要吃掉三只最重要的青蛙，吃完你就可以 call it a day 了。在正式使用时，每天你都需要决定自己必须完成的 1-3 件任务。这些任务必须对你有意义，简单来说，做完这些任务之后，你得感觉今天活回本了。考虑到没人能不熬夜，在个人设置里，你可以自己决定这一天什么时候结束（但是不要超过次日六点）。</p>
+        <p class="readme-para">与此相关的还有一个问题：能不能不吃青蛙。青蛙，可爱又无害的小东西，不要吃它。于是本人将 FROG 作为首字母凑出四个单词，作为这个产品的概念：</p>
         <div class="readme-def">
           <div class="readme-def-head"><em>F</em>orgive</div>
           <p>放过你自己吧，你脑子有病。</p>
@@ -1033,6 +1075,16 @@ body {
           <div class="readme-def-head"><em>G</em>row</div>
           <p>我也只是个几岁的成年人。She's young but she's daily growing.</p>
         </div>
+        <hr class="readme-hr">
+        <p class="readme-para">Bingo 部分，那就是普通的 Bingo。然而其中还是有本人的一些小巧思：</p>
+        <ol class="readme-list">
+          <li>由于最初设计时只考虑了本人的情况，因此默认事件池的范围很狭窄，基本上只服务于 ADHD-I 型群体。好在现在的默认词条可以直接修改删除，用户可以自行修改或提高这些词条的难度。</li>
+          <li>在完成一些 Bingo 后，所有人都可以获得自定义事件池，用户可以设定从不同事件池中抽取的词条数量，从而在不知道干啥的一天中找到一点方向（参考使用例：将一个自定义池设定为所有我没看完的书、影视作品、没打完的游戏）。</li>
+          <li>随机生成的 Bingo 往往存在一些相对轻松的达成路线，为此引入了词条的任务难度（最高为 3），以比较简陋的方式实现了各路线之间的相对平衡。任务难度也完全可定义和编辑，便于用户自行决定每个词条实现的难度。</li>
+          <li>考虑到"运动 30 分钟"和"运动 1 小时"完全可以以不同难度的形式同时存在于事件池中，但不应在 Bingo 上同时出现，为此引入了互斥组功能，这样抽取的时候会避开同组的词条。</li>
+          <li>引入热力图和连胜，使 Bingo 具有更长效的使用价值和乐趣。</li>
+        </ol>
+        <p class="readme-para">好了，感谢你看到这里。如果你觉得这个项目对你尚且有点用处，欢迎使用并给我反馈。更多细节设置可以在个人设置中查看。</p>
       </div>
       <button id="welcome-start" class="primary-btn">定义我的事件池 →</button>
     </div>
@@ -1042,8 +1094,8 @@ body {
   <div id="onboarding" class="ob-overlay hidden">
     <div class="ob-content">
       <div class="ob-header">
-        <h1 class="ob-title">欢迎使用 FROG Bingo</h1>
-        <p class="ob-subtitle">先整理一下默认事件池，把不适合你的事件点击划掉，剩下的就是你的专属事件库</p>
+        <h1 class="ob-title">自定义事件池</h1>
+        <p class="ob-subtitle">这里是每日 Bingo 棋盘的词条来源。点击划掉不适合你的，长按可编辑内容，也可以添加自己的词条</p>
       </div>
       <div id="ob-chips" class="ob-chips"></div>
       <div id="ob-count" class="ob-count"></div>
@@ -1053,13 +1105,24 @@ body {
     </div>
   </div>
 
+  <!-- Regret confirm modal -->
+  <div id="regret-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-sheet" style="padding: 24px 20px 20px; gap: 16px; display: flex; flex-direction: column;">
+      <p style="font-size:15px; font-weight:600; color:var(--text); line-height:1.5;">想要修改今天的任务吗？<br>每天只能后悔一次。</p>
+      <p style="font-size:13px; color:var(--muted); line-height:1.6;">确认后今天已完成的 Bingo 将不做数，棋盘会重新生成。</p>
+      <button id="regret-confirm-btn" class="primary-btn">确认，回到任务选择</button>
+      <button id="regret-cancel-btn" class="text-btn" style="color:var(--muted)">取消</button>
+    </div>
+  </div>
+
   <!-- Term edit sheet -->
   <div id="term-edit-sheet" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-sheet">
       <input id="term-edit-label" type="text" class="term-name-input" maxlength="20">
       <div class="weight-row">
-        <span class="weight-title">权重</span>
+        <span class="weight-title">任务难度</span>
         <div class="weight-stepper">
           <button class="w-step large" id="weight-minus">−</button>
           <span id="weight-val">1</span>
@@ -1717,7 +1780,8 @@ function initSetup() {
     if (tasks.length === 0) { alert('请至少输入一件大事'); return; }
     const n = parseInt(document.querySelector('.size-btn.active').dataset.size);
     const { board, btPositions } = generateBoard(tasks, n);
-    S.today = { date: todayStr(), n, bigTasks: tasks, board, btPositions, btbSnapshot: 0 };
+    const sameDay = S.today?.date === todayStr();
+    S.today = { date: todayStr(), n, bigTasks: tasks, board, btPositions, btbSnapshot: 0, usedRegret: sameDay ? (S.today?.usedRegret ?? false) : false };
     save();
     showScreen('bingo');
     renderBingo();
@@ -1769,6 +1833,7 @@ function renderBoard() {
     div.innerHTML = `<span class="cell-txt">${cell.text}</span>`;
     div.addEventListener('click', () => {
       S.today.board[i].completed = !S.today.board[i].completed;
+      if (S.today.board[i].completed) S.today.everDone = true;
       recordToday();
       checkUnlocks();
       renderBingo();
@@ -1789,8 +1854,9 @@ function renderBingo() {
   renderBigTasks();
   renderBoard();
   renderTier();
-  const anyDone = S.today.board.some(c => c.completed);
-  document.getElementById('redraw-btn').classList.toggle('hidden', anyDone);
+  document.getElementById('redraw-btn').classList.toggle('hidden', !!S.today.everDone);
+  document.getElementById('bingo-tip').classList.toggle('hidden', !!localStorage.getItem('bingoTipDone'));
+  document.getElementById('regret-btn').classList.toggle('hidden', !!S.today.usedRegret);
 }
 
 const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
@@ -1864,34 +1930,6 @@ function renderHistory() {
   document.getElementById('streak-num').textContent = streak;
 }
 
-function clearMockHistory() {
-  S.history = S.history.filter(h => !h._mock);
-  save();
-  renderHistory();
-}
-
-function generateMockHistory() {
-  const probs = [0.12, 0.18, 0.28, 0.28, 0.14];
-  const today = new Date();
-  for (let i = 89; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const ds = localDateStr(d);
-    if (Math.random() < 0.2) continue;
-    let tier = 0;
-    let cumulative = 0;
-    const rand = Math.random();
-    for (let t = 0; t < 5; t++) {
-      cumulative += probs[t];
-      if (rand < cumulative) { tier = t; break; }
-    }
-    const existing = S.history.findIndex(h => h.date === ds);
-    if (existing >= 0) S.history[existing] = { date: ds, tier, _mock: true };
-    else S.history.push({ date: ds, tier, _mock: true });
-  }
-  save();
-  renderHistory();
-}
 
 function renderPools() {
   renderRatios();
@@ -2208,7 +2246,7 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
-  const noBoard = !S.today || S.today.date !== todayStr();
+  const noBoard = !S.today || S.today.date !== todayStr() || !S.today.board;
   const boardPanel = document.getElementById('board-panel');
 
   if (name === 'bingo' && noBoard) {
@@ -2270,13 +2308,14 @@ function _sortGroupItems(items) {
   if (poolListSort === 'weight-desc') items.sort((a, b) => w(b) - w(a));
   else if (poolListSort === 'weight-asc') items.sort((a, b) => w(a) - w(b));
   else if (poolListSort === 'az') items.sort((a, b) => l(a).localeCompare(l(b), 'zh'));
+  else if (poolListSort === 'za') items.sort((a, b) => l(b).localeCompare(l(a), 'zh'));
 }
 
 function _makePliWeightBadge(getW, setW) {
   const badge = document.createElement('span');
   badge.className = 'pli-weight';
   badge.textContent = getW();
-  badge.title = '点击循环切换权重';
+  badge.title = '点击循环切换任务难度';
   badge.addEventListener('click', e => {
     e.stopPropagation();
     const cur = getW();
@@ -2295,8 +2334,8 @@ function renderPoolList() {
   el.innerHTML = '';
   const sortBar = document.createElement('div');
   sortBar.className = 'pli-sort-bar';
-  [{ key: 'weight-desc', text: '权重', sym: '↓' },
-   { key: 'weight-asc', text: '权重', sym: '↑' }, { key: 'az', text: 'A–Z', sym: '' }]
+  [{ key: 'weight-desc', text: '难度', sym: '↓' },
+   { key: 'weight-asc', text: '难度', sym: '↑' }, { key: 'az', text: 'A–Z', sym: '' }, { key: 'za', text: 'Z–A', sym: '' }]
     .forEach(({ key, text, sym }) => {
       const btn = document.createElement('button');
       btn.className = 'pli-sort-btn' + (poolListSort === key ? ' active' : '');
@@ -2314,6 +2353,23 @@ function renderPoolList() {
   sortBar.appendChild(refreshBtn);
   el.appendChild(sortBar);
 
+  // Dismissible tip (first visit only)
+  if (!localStorage.getItem('plTipDone')) {
+    const tip = document.createElement('div');
+    tip.className = 'pli-tip';
+    tip.innerHTML = `
+      <button class="pli-tip-close" title="不再显示">×</button>
+      <div class="pli-tip-row"><span class="pli-tip-key">点击词条</span>编辑文字或任务难度</div>
+      <div class="pli-tip-row"><span class="pli-tip-key">点击右侧数字</span>切换任务难度 1→2→3</div>
+      <div class="pli-tip-row"><span class="pli-tip-key">拖动到另一词条</span>创建互斥组，每次只抽其中一个</div>`;
+    tip.querySelector('.pli-tip-close').addEventListener('click', e => {
+      e.stopPropagation();
+      localStorage.setItem('plTipDone', '1');
+      tip.remove();
+    });
+    el.appendChild(tip);
+  }
+
   if (!terms.length) {
     const empty = document.createElement('div');
     empty.className = 'pli-empty'; empty.textContent = '还没有事件，在下方添加';
@@ -2328,6 +2384,7 @@ function renderPoolList() {
   if (poolListSort === 'weight-desc') indexed.sort((a, b) => _termWeight(b.raw) - _termWeight(a.raw));
   else if (poolListSort === 'weight-asc') indexed.sort((a, b) => _termWeight(a.raw) - _termWeight(b.raw));
   else if (poolListSort === 'az') indexed.sort((a, b) => _termLabel(a.raw).localeCompare(_termLabel(b.raw), 'zh'));
+  else if (poolListSort === 'za') indexed.sort((a, b) => _termLabel(b.raw).localeCompare(_termLabel(a.raw), 'zh'));
 
   // Float groups to top
   indexed = [...indexed.filter(({raw}) => raw?.type === 'group'), ...indexed.filter(({raw}) => raw?.type !== 'group')];
@@ -2442,6 +2499,7 @@ function renderPoolList() {
       if (poolListSort === 'weight-desc') sortedItems.sort((a, b) => _itemW(b.item) - _itemW(a.item));
       else if (poolListSort === 'weight-asc') sortedItems.sort((a, b) => _itemW(a.item) - _itemW(b.item));
       else if (poolListSort === 'az') sortedItems.sort((a, b) => _itemL(a.item).localeCompare(_itemL(b.item), 'zh'));
+      else if (poolListSort === 'za') sortedItems.sort((a, b) => _itemL(b.item).localeCompare(_itemL(a.item), 'zh'));
 
       sortedItems.forEach(({ item, j }) => {
         const text = typeof item === 'string' ? item : item.text;
@@ -2948,7 +3006,7 @@ function showWelcome(onDone) {
 function showOnboarding() {
   document.getElementById('onboarding').classList.remove('hidden');
   document.querySelector('.ob-subtitle').textContent =
-    '先整理一下默认事件池，把不适合你的事件点击划掉；长按可修改内容';
+    '这里是每日 Bingo 棋盘的词条来源。点击划掉不适合你的，长按可编辑内容，也可以添加自己的词条';
   const excluded = new Set();
   const chips = document.getElementById('ob-chips');
   const countEl = document.getElementById('ob-count');
@@ -3046,6 +3104,7 @@ function renderResetHour() {
 
 document.addEventListener('DOMContentLoaded', () => {
   const isNewUser = !localStorage.getItem('frog-bingo');
+  if (isNewUser) { localStorage.removeItem('bingoTipDone'); localStorage.removeItem('plTipDone'); }
   load();
   archiveYesterday();
   initSetup();
@@ -3070,6 +3129,56 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!open) renderRatios();
   });
 
+  document.querySelector('#bingo-tip .bingo-tip-close').addEventListener('click', () => {
+    localStorage.setItem('bingoTipDone', '1');
+    document.getElementById('bingo-tip').classList.add('hidden');
+  });
+
+  document.getElementById('regret-btn').addEventListener('click', () => {
+    document.getElementById('regret-modal').classList.remove('hidden');
+  });
+  document.getElementById('regret-cancel-btn').addEventListener('click', () => {
+    document.getElementById('regret-modal').classList.add('hidden');
+  });
+  document.querySelector('#regret-modal .modal-overlay').addEventListener('click', () => {
+    document.getElementById('regret-modal').classList.add('hidden');
+  });
+  document.getElementById('regret-confirm-btn').addEventListener('click', () => {
+    document.getElementById('regret-modal').classList.add('hidden');
+    const prev = S.today;
+    S.today = {
+      date: prev.date,
+      n: prev.n,
+      bigTasks: prev.bigTasks,
+      board: null,
+      btPositions: null,
+      btbSnapshot: 0,
+      usedRegret: true,
+    };
+    save();
+    // Pre-fill setup inputs with previous big tasks
+    const taskInputs = document.getElementById('task-inputs');
+    taskInputs.innerHTML = '';
+    prev.bigTasks.forEach((task, i) => {
+      const row = document.createElement('div');
+      row.className = 'task-row';
+      row.innerHTML = `<span class="task-num">${i + 1}</span>
+        <input type="text" class="task-input" placeholder="第${i + 1}件大事" maxlength="16">
+        ${i > 0 ? '<button class="remove-task-btn" aria-label="删除">×</button>' : ''}`;
+      if (i > 0) row.querySelector('.remove-task-btn').addEventListener('click', () => {
+        row.remove(); renumberTasks();
+        document.getElementById('add-task-btn').style.display = '';
+        maybeRerenderRatios();
+      });
+      row.querySelector('input').value = task;
+      taskInputs.appendChild(row);
+    });
+    document.getElementById('add-task-btn').style.display = prev.bigTasks.length >= 3 ? 'none' : '';
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.toggle('active', +b.dataset.size === prev.n));
+    maybeRerenderRatios();
+    showScreen('bingo');
+  });
+
   document.getElementById('redraw-btn').addEventListener('click', () => {
     if (!S.today || S.today.board.some(c => c.completed)) return;
     const { board, btPositions } = generateBoard(S.today.bigTasks, S.today.n);
@@ -3080,10 +3189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBingo();
   });
 
-  document.getElementById('mock-data-btn').addEventListener('click', generateMockHistory);
-  document.getElementById('clear-mock-btn').addEventListener('click', clearMockHistory);
-
-  document.getElementById('connect-file-btn').addEventListener('click', connectFileSync);
+document.getElementById('connect-file-btn').addEventListener('click', connectFileSync);
   document.getElementById('restore-file-btn').addEventListener('click', restoreFromFile);
   document.getElementById('export-btn').addEventListener('click', exportJSON);
   document.getElementById('import-input').addEventListener('change', e => {

@@ -98,16 +98,26 @@ body {
   font-size: 12px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.task-input {
-  flex: 1; background: var(--bg); border: none; border-radius: var(--radius-xs);
-  padding: 10px 12px; color: var(--text); font-size: 15px; outline: none;
+.task-input-wrap {
+  flex: 1; position: relative;
+  background: var(--bg); border-radius: var(--radius-xs);
+  transition: background .15s;
 }
-.task-input:focus { background: var(--bg2); }
+.task-input-wrap:focus-within { background: var(--bg2); }
+.task-input {
+  display: block; width: 100%; box-sizing: border-box;
+  background: transparent; border: none; border-radius: var(--radius-xs);
+  padding: 10px 12px; color: var(--text); font-size: 15px; outline: none;
+  resize: none; overflow: hidden; line-height: 1.45;
+  min-height: 42px; font-family: inherit;
+}
+.task-input.has-remove { padding-right: 42px; }
 .task-input::placeholder { color: var(--muted); }
 .remove-task-btn {
+  position: absolute; right: 8px; top: 8px;
   width: 26px; height: 26px; border-radius: 50%; border: none;
   background: var(--bg2); color: var(--muted); font-size: 17px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 
 .primary-btn {
@@ -907,7 +917,9 @@ body {
           <div id="task-inputs">
             <div class="task-row">
               <span class="task-num">1</span>
-              <input type="text" class="task-input" placeholder="今天最重要的一件事" maxlength="16">
+              <div class="task-input-wrap">
+                <textarea class="task-input" placeholder="今天最重要的一件事" maxlength="50" rows="1"></textarea>
+              </div>
             </div>
           </div>
           <button id="add-task-btn" class="text-btn">＋ 再加一件</button>
@@ -938,7 +950,7 @@ body {
         <button id="redraw-btn" class="text-btn redraw-btn hidden">↻ 重新抽取</button>
         <div id="bingo-tip" class="bingo-tip hidden">
           <button class="bingo-tip-close" title="不再显示">×</button>
-          如果觉得抽取的词条不满意，可以点击重新抽取。但是一旦点击完成了某一词条，就不可以重抽了哦。
+          如果对抽取的词条不满意，可以点击重新抽取。但是一旦点击完成了某一词条，就不可以重抽了哦。
         </div>
         <div id="unlock-banner" class="banner hidden"></div>
       </div>
@@ -1102,7 +1114,7 @@ body {
         <p class="readme-para">Bingo 部分，那就是普通的 Bingo。然而其中还是有本人的一些小巧思：</p>
         <ol class="readme-list">
           <li>由于最初设计时只考虑了本人的情况，因此默认事件池的范围很狭窄，基本上只服务于 ADHD-I 型群体。不过现在的默认事件池已开放编辑，你可以自行修改或删除词条，也可以添加自己想要的词条——就在下一页。</li>
-          <li>在完成一些 Bingo 后，所有人都可以获得自定义事件池，你可以设定从不同事件池中抽取的词条数量，从而在不知道干啥的一天中找到一点方向（参考用例：将一个自定义池设定为所有我没看完的书、影视作品、没打完的游戏）。</li>
+          <li>在完成一些 Bingo 后，所有人都可以获得自定义事件池，你可以设定从不同事件池中抽取的词条数量，从而在不知道干啥的一天中找到一点方向（参考用例：将一个自定义池设定为所有没看完的书、影视作品、没打完的游戏）。</li>
           <li>随机生成的 Bingo 往往存在一些相对轻松的达成路线，为此引入了词条的任务难度（最高为 3），以比较简陋的方式实现了各路线之间的相对平衡。任务难度也完全可定义和编辑，便于你自行决定每个词条实现的难度。</li>
           <li>考虑到"运动 30 分钟"和"运动 1 小时"完全可以以不同难度的形式同时存在于事件池中，但不应在 Bingo 上同时出现，为此引入了互斥组功能，这样抽取的时候会避开同组的词条。</li>
           <li>有热力图和连胜，使 Bingo 具有更长效的使用价值和乐趣。</li>
@@ -1162,7 +1174,7 @@ body {
     <div class="modal-sheet" style="padding: 24px 20px 20px; gap: 16px; display: flex; flex-direction: column;">
       <p style="font-size:15px; font-weight:600; color:var(--text); line-height:1.5;">想要修改今天的任务吗？<br>每天只能后悔一次。</p>
       <p style="font-size:13px; color:var(--muted); line-height:1.6;">确认后今天已完成的 Bingo 将不做数，棋盘会重新生成。</p>
-      <button id="regret-confirm-btn" class="primary-btn">确认，回到任务选择</button>
+      <button id="regret-confirm-btn" class="primary-btn">确认，重新决定任务</button>
       <button id="regret-cancel-btn" class="text-btn" style="color:var(--muted)">取消</button>
     </div>
   </div>
@@ -1193,7 +1205,7 @@ const DEFAULT_TERMS = [
   '从无关主线的超专注中成功抽身',
   '喝6杯水',
   '按时吃2顿饭',
-  '找出1件拖延很久的任务并完成',
+  '完成 1 件拖延很久的任务',
   '刷2次牙',
   '散步1小时',
   '没有开启新坑',
@@ -1202,7 +1214,7 @@ const DEFAULT_TERMS = [
   '运动 30 分钟',
   '消耗部分囤积物品',
   '做brain dump',
-  '把1件重要任务拆成小步骤，并推进',
+  '没有憋尿',
   '重启1个曾经感兴趣的项目',
   '午夜前洗澡',
   '睡前玩电子设备不超过30分钟',
@@ -1796,6 +1808,8 @@ function archiveYesterday() {
 }
 
 function initSetup() {
+  document.querySelectorAll('#task-inputs .task-input').forEach(initTaskTextarea);
+
   document.querySelectorAll('.size-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
@@ -1812,8 +1826,10 @@ function initSetup() {
     row.className = 'task-row';
     row.innerHTML = `
       <span class="task-num">${idx + 1}</span>
-      <input type="text" class="task-input" placeholder="第${idx + 1}件大事" maxlength="16">
-      <button class="remove-task-btn" aria-label="删除">×</button>`;
+      <div class="task-input-wrap">
+        <textarea class="task-input has-remove" placeholder="第${idx + 1}件大事" maxlength="50" rows="1"></textarea>
+        <button class="remove-task-btn" aria-label="删除">×</button>
+      </div>`;
     row.querySelector('.remove-task-btn').addEventListener('click', () => {
       row.remove();
       renumberTasks();
@@ -1822,7 +1838,9 @@ function initSetup() {
     });
     document.getElementById('task-inputs').appendChild(row);
     if (rows.length + 1 >= 3) document.getElementById('add-task-btn').style.display = 'none';
-    row.querySelector('input').focus();
+    const ta = row.querySelector('.task-input');
+    initTaskTextarea(ta);
+    ta.focus();
     maybeRerenderRatios();
   });
 
@@ -1838,6 +1856,13 @@ function initSetup() {
     showScreen('bingo');
     renderBingo();
   });
+}
+
+function initTaskTextarea(ta) {
+  const resize = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+  ta.addEventListener('input', resize);
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+  resize();
 }
 
 function renumberTasks() {
@@ -3286,14 +3311,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const row = document.createElement('div');
       row.className = 'task-row';
       row.innerHTML = `<span class="task-num">${i + 1}</span>
-        <input type="text" class="task-input" placeholder="第${i + 1}件大事" maxlength="16">
-        ${i > 0 ? '<button class="remove-task-btn" aria-label="删除">×</button>' : ''}`;
+        <div class="task-input-wrap">
+          <textarea class="task-input${i > 0 ? ' has-remove' : ''}" placeholder="第${i + 1}件大事" maxlength="50" rows="1"></textarea>
+          ${i > 0 ? '<button class="remove-task-btn" aria-label="删除">×</button>' : ''}
+        </div>`;
       if (i > 0) row.querySelector('.remove-task-btn').addEventListener('click', () => {
         row.remove(); renumberTasks();
         document.getElementById('add-task-btn').style.display = '';
         maybeRerenderRatios();
       });
-      row.querySelector('input').value = task;
+      const ta = row.querySelector('.task-input');
+      ta.value = task;
+      initTaskTextarea(ta);
       taskInputs.appendChild(row);
     });
     document.getElementById('add-task-btn').style.display = prev.bigTasks.length >= 3 ? 'none' : '';

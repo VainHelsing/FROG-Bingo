@@ -1,4 +1,4 @@
-const CACHE = 'frog-bingo-v5';
+const CACHE = 'frog-bingo-v6';
 const PRECACHE = [
   './',
   './index.html',

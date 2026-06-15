@@ -4,7 +4,7 @@
     {
       "name": "adhd-bingo",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "7778"],
+      "runtimeArgs": ["-m", "http.server", "7778", "--directory", "/Users/vainhelsing/Documents/ƃolp/FROG-Bingo"],
       "port": 7778
     }
   ]

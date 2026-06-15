@@ -525,8 +525,6 @@ body {
 .pli-group-item:last-child { border-bottom: none; }
 .pli-ungroup-btn { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 2px 6px; flex-shrink: 0; line-height: 1; opacity: 0.55; }
 .pli-ungroup-btn:hover { color: var(--accent); opacity: 1; }
-.pli-drag-over { background: color-mix(in srgb, var(--accent) 8%, transparent); outline: 1px dashed var(--accent); }
-.pli[draggable], .pli-group-item[draggable] { cursor: grab; }
 .pli-tip {
   margin: 10px 12px 4px;
   padding: 11px 14px;
@@ -615,15 +613,6 @@ body {
 }
 .pli-selected .pli-cb { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-/* Touch drag ghost */
-.pli-touch-ghost {
-  position: fixed; z-index: 500; pointer-events: none;
-  background: var(--card); border-radius: var(--radius-xs);
-  padding: 10px 14px; box-shadow: 0 8px 28px rgba(0,0,0,.25);
-  font-size: 14px; color: var(--text); max-width: 220px;
-  border-left: 3px solid var(--accent);
-}
-.pli-dragging { opacity: .35; }
 
 /* Flash highlight for new term */
 @keyframes pliFlash {
@@ -1128,6 +1117,15 @@ body {
               <label class="outline-btn">导入<input type="file" id="import-input" accept=".json" style="display:none"></label>
             </div>
           </div>
+          <div class="data-row">
+            <div class="data-row-info">
+              <span class="data-label">保存今日 Bingo</span>
+              <span class="sync-status">生成可打印 A4 图片，不含完成进度</span>
+            </div>
+            <div class="data-row-btns">
+              <button id="save-image-btn" class="outline-btn">保存图片</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1557,6 +1555,170 @@ function exportJSON() {
   a.download = `frog-bingo-${todayStr()}.json`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function saveBingoImage() {
+  if (!S.today || S.today.date !== todayStr() || !S.today.board) {
+    alert('今日还没有生成 Bingo 棋盘，无法保存图片。');
+    return;
+  }
+
+  const { board, n, bigTasks, btPositions } = S.today;
+  const btSet = new Set(btPositions);
+
+  // A4 landscape at 200 DPI
+  const W = 2339, H = 1654;
+  const PAD = 72;
+  const LEFT_W = 560;
+  const RIGHT_X = PAD + LEFT_W + 56;
+  const RIGHT_W = W - RIGHT_X - PAD;
+  const FONT = '"PingFang SC", "Noto Sans SC", -apple-system, sans-serif';
+
+  function rrect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y,     x + w, y + r,     r);
+    ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h); ctx.arcTo(x,     y + h, x,     y + h - r, r);
+    ctx.lineTo(x, y + r); ctx.arcTo(x,     y,     x + r, y,             r);
+    ctx.closePath();
+  }
+
+  function wrapText(ctx, text, maxW, fontSize, weight) {
+    ctx.font = `${weight} ${fontSize}px ${FONT}`;
+    const lines = [];
+    let line = '';
+    for (const ch of text) {
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxW && line.length > 0) {
+        lines.push(line); line = ch;
+      } else { line = test; }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  const cvs = document.createElement('canvas');
+  cvs.width = W; cvs.height = H;
+  const ctx = cvs.getContext('2d');
+
+  // ── White background ──────────────────────────────────────────────────────
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Thin red top accent bar ───────────────────────────────────────────────
+  ctx.fillStyle = '#B41C2C';
+  ctx.fillRect(0, 0, W, 8);
+
+  // ── Date heading (prominent, black) ──────────────────────────────────────
+  ctx.fillStyle = '#1C1C1E';
+  ctx.font = `700 64px ${FONT}`;
+  ctx.fillText(S.today.date, PAD, PAD + 76);
+
+  // ── "今日要闻" label ───────────────────────────────────────────────────────
+  ctx.fillStyle = '#B41C2C';
+  ctx.font = `600 26px ${FONT}`;
+  ctx.fillText('今日要闻', PAD, PAD + 120);
+
+  // ── Thin horizontal rule ──────────────────────────────────────────────────
+  ctx.fillStyle = '#E8E8E8';
+  ctx.fillRect(PAD, PAD + 136, LEFT_W, 1.5);
+
+  // ── Big tasks list ────────────────────────────────────────────────────────
+  const listTop = PAD + 156;
+  const available = H - listTop - PAD;
+  const rowH = Math.min(Math.floor(available / bigTasks.length), 170);
+  const numR = 26;
+  const textX = PAD + numR * 2 + 16;
+  const textMaxW = PAD + LEFT_W - textX - 8;
+
+  bigTasks.forEach((task, i) => {
+    const cy = listTop + i * rowH + rowH / 2;
+
+    // Number circle
+    ctx.fillStyle = '#B41C2C';
+    ctx.beginPath(); ctx.arc(PAD + numR, cy, numR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `700 26px ${FONT}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(i + 1), PAD + numR, cy);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+    // Task text — size down for long content
+    const fontSize = rowH > 130 ? 32 : rowH > 90 ? 28 : 24;
+    const lines = wrapText(ctx, task, textMaxW, fontSize, '500');
+    const lineH = fontSize * 1.45;
+    const totalH = lines.length * lineH;
+    const startY = cy - totalH / 2 + fontSize * 0.82;
+    ctx.fillStyle = '#1C1C1E';
+    ctx.font = `500 ${fontSize}px ${FONT}`;
+    lines.forEach((l, li) => ctx.fillText(l, textX, startY + li * lineH));
+
+    // Separator
+    if (i < bigTasks.length - 1) {
+      ctx.fillStyle = '#EEEEEE';
+      ctx.fillRect(PAD, listTop + (i + 1) * rowH - 1, LEFT_W, 1.5);
+    }
+  });
+
+  // ── Vertical divider ─────────────────────────────────────────────────────
+  ctx.fillStyle = '#E0E0E0';
+  ctx.fillRect(PAD + LEFT_W + 28, PAD + 8, 1.5, H - PAD - 16);
+
+  // ── Bingo grid ────────────────────────────────────────────────────────────
+  const GAP = 10;
+  const gridMax = Math.min(RIGHT_W - 40, H - PAD * 2 - 40);
+  const cellSize = Math.min(Math.floor((gridMax - GAP * (n - 1)) / n), 230);
+  const gridTotalW = cellSize * n + GAP * (n - 1);
+  const gridTotalH = cellSize * n + GAP * (n - 1);
+  const gx = RIGHT_X + Math.floor((RIGHT_W - gridTotalW) / 2);
+  const gy = PAD + Math.floor((H - PAD * 2 - gridTotalH) / 2);
+
+  for (let row = 0; row < n; row++) {
+    for (let col = 0; col < n; col++) {
+      const idx = row * n + col;
+      const cell = board[idx];
+      const cx = gx + col * (cellSize + GAP);
+      const cy = gy + row * (cellSize + GAP);
+      const isBT = btSet.has(idx);
+
+      // Background
+      ctx.fillStyle = isBT ? '#FEF0F0' : '#FFFFFF';
+      rrect(ctx, cx, cy, cellSize, cellSize, 14);
+      ctx.fill();
+
+      // Border
+      ctx.strokeStyle = isBT ? '#B41C2C' : '#DEDEDE';
+      ctx.lineWidth = isBT ? 2.5 : 1.5;
+      rrect(ctx, cx, cy, cellSize, cellSize, 14);
+      ctx.stroke();
+
+      // Text
+      const label = cell?.text ?? '';
+      if (label) {
+        const fs = cellSize > 160 ? 28 : cellSize > 120 ? 24 : 20;
+        const lines = wrapText(ctx, label, cellSize - 24, fs, isBT ? '600' : '400');
+        const lineH = fs * 1.38;
+        const totalH = lines.length * lineH;
+        const startY = cy + (cellSize - totalH) / 2 + fs * 0.82;
+        ctx.fillStyle = isBT ? '#B41C2C' : '#1C1C1E';
+        ctx.font = `${isBT ? '600' : '400'} ${fs}px ${FONT}`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+        lines.forEach((l, li) => ctx.fillText(l, cx + cellSize / 2, startY + li * lineH));
+        ctx.textAlign = 'left';
+      }
+    }
+  }
+
+  // ── Download ──────────────────────────────────────────────────────────────
+  cvs.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `frog-bingo-${todayStr()}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
 }
 
 function importJSON(file) {
@@ -2499,16 +2661,12 @@ let editingTermBody = null;
 let addWeight = 2;
 let _multiSelectMode = false;
 let _multiSelKeys = new Set(); // "termIdx" or "termIdx:groupItemIdx"
-let _touchDrag = null;
-let _touchDragTimer = null;
-let _touchGhostEl = null;
 
 function getEditingTerms() {
   return editingPoolIdx === -1 ? S.pools.default : S.pools.custom[editingPoolIdx].terms;
 }
 
 let poolListSort = 'weight-desc';
-let _pliDrag = null; // { termIdx, groupItemIdx? }
 
 function _termWeight(raw) {
   if (raw?.type === 'group') return Math.max(...raw.items.map(it => (typeof it === 'object' ? it.weight : null) ?? 2));
@@ -2576,8 +2734,7 @@ function renderPoolList(flashNewIdx, flashGroupIdx) {
     tip.innerHTML = `
       <button class="pli-tip-close" title="不再显示">×</button>
       <div class="pli-tip-row"><span class="pli-tip-key">点击词条</span>编辑文字或任务难度</div>
-      <div class="pli-tip-row"><span class="pli-tip-key">点击右侧数字</span>切换任务难度 1→2→3</div>
-      <div class="pli-tip-row"><span class="pli-tip-key">拖动到另一词条</span>创建互斥组，每次只抽其中一个</div>`;
+      <div class="pli-tip-row"><span class="pli-tip-key">点击右侧数字</span>切换任务难度 1→2→3</div>`;
     tip.querySelector('.pli-tip-close').addEventListener('click', e => {
       e.stopPropagation();
       localStorage.setItem('plTipDone', '1');
@@ -2605,45 +2762,6 @@ function renderPoolList(flashNewIdx, flashGroupIdx) {
   // Float groups to top
   indexed = [...indexed.filter(({raw}) => raw?.type === 'group'), ...indexed.filter(({raw}) => raw?.type !== 'group')];
 
-  // Drag helpers
-  function setupDrop(el, onDrop) {
-    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('pli-drag-over'); });
-    el.addEventListener('dragleave', () => el.classList.remove('pli-drag-over'));
-    el.addEventListener('drop', e => {
-      e.preventDefault(); el.classList.remove('pli-drag-over');
-      if (_pliDrag) onDrop(_pliDrag);
-    });
-  }
-
-  function mergeTerms(srcIdx, srcItemIdx, tgtIdx) {
-    const ts = getEditingTerms();
-    if (srcIdx === tgtIdx && srcItemIdx === undefined) return;
-    const srcRaw = ts[srcIdx];
-    const tgtRaw = ts[tgtIdx];
-
-    // Extract the source item
-    let srcItem;
-    if (srcItemIdx !== undefined && srcRaw?.type === 'group') {
-      srcItem = srcRaw.items.splice(srcItemIdx, 1)[0];
-      if (srcRaw.items.length === 1) { ts[srcIdx] = srcRaw.items[0]; } // collapse single-item group
-      else if (!srcRaw.items.length) { ts.splice(srcIdx, 1); if (tgtIdx > srcIdx) tgtIdx--; }
-    } else if (srcRaw?.type !== 'group') {
-      srcItem = ts.splice(srcIdx, 1)[0];
-      if (tgtIdx > srcIdx) tgtIdx--;
-    } else return;
-
-    const tgt = ts[tgtIdx];
-    if (tgt?.type === 'group') {
-      tgt.items.push(srcItem);
-      _sortGroupItems(tgt.items);
-    } else {
-      const newGroup = { type: 'group', items: [tgt, srcItem] };
-      _sortGroupItems(newGroup.items);
-      ts[tgtIdx] = newGroup;
-    }
-    save(); renderPoolList();
-  }
-
   function ungroupItem(termIdx, itemIdx) {
     const ts = getEditingTerms();
     const group = ts[termIdx];
@@ -2653,62 +2771,6 @@ function renderPoolList(flashNewIdx, flashGroupIdx) {
     else if (!group.items.length) { ts[termIdx] = item; }
     else ts.splice(termIdx + 1, 0, item);
     save(); renderPoolList();
-  }
-
-  // Touch drag helpers
-  function startTouchDrag(e, termIdx, groupItemIdx, labelText) {
-    const t = e.touches[0];
-    clearTimeout(_touchDragTimer);
-    _touchDragTimer = setTimeout(() => {
-      _touchDrag = { termIdx, groupItemIdx, el: e.currentTarget };
-      e.currentTarget.classList.add('pli-dragging');
-      _touchGhostEl = document.createElement('div');
-      _touchGhostEl.className = 'pli-touch-ghost';
-      _touchGhostEl.textContent = labelText;
-      document.body.appendChild(_touchGhostEl);
-      _touchGhostEl.style.left = (t.clientX - 20) + 'px';
-      _touchGhostEl.style.top  = (t.clientY - 30) + 'px';
-    }, 380);
-  }
-  function onTouchMove(e) {
-    clearTimeout(_touchDragTimer);
-    if (!_touchDrag) return;
-    e.preventDefault();
-    const t = e.touches[0];
-    if (_touchGhostEl) {
-      _touchGhostEl.style.left = (t.clientX - 20) + 'px';
-      _touchGhostEl.style.top  = (t.clientY - 30) + 'px';
-      _touchGhostEl.style.display = 'none';
-    }
-    const over = document.elementFromPoint(t.clientX, t.clientY);
-    if (_touchGhostEl) _touchGhostEl.style.display = '';
-    document.querySelectorAll('.pli-drag-over').forEach(x => x.classList.remove('pli-drag-over'));
-    const dropTarget = over?.closest('.pli[data-term-idx], .pli-group[data-term-idx]');
-    if (dropTarget) dropTarget.classList.add('pli-drag-over');
-  }
-  function onTouchEnd(e) {
-    clearTimeout(_touchDragTimer);
-    if (_touchGhostEl) { _touchGhostEl.remove(); _touchGhostEl = null; }
-    document.querySelectorAll('.pli-drag-over').forEach(x => x.classList.remove('pli-drag-over'));
-    if (!_touchDrag) return;
-    _touchDrag.el.classList.remove('pli-dragging');
-    const t = e.changedTouches[0];
-    if (_touchGhostEl) _touchGhostEl.style.display = 'none';
-    const over = document.elementFromPoint(t.clientX, t.clientY);
-    if (_touchGhostEl) _touchGhostEl.style.display = '';
-    const dropEl = over?.closest('.pli[data-term-idx], .pli-group[data-term-idx]');
-    if (dropEl) {
-      const tgtTermIdx = parseInt(dropEl.dataset.termIdx);
-      if (!isNaN(tgtTermIdx) && !(tgtTermIdx === _touchDrag.termIdx && _touchDrag.groupItemIdx === undefined)) {
-        mergeTerms(_touchDrag.termIdx, _touchDrag.groupItemIdx, tgtTermIdx);
-      }
-    }
-    _touchDrag = null;
-  }
-  function onTouchCancel() {
-    clearTimeout(_touchDragTimer);
-    if (_touchGhostEl) { _touchGhostEl.remove(); _touchGhostEl = null; }
-    if (_touchDrag) { _touchDrag.el.classList.remove('pli-dragging'); _touchDrag = null; }
   }
 
   // Update multi-select count badge
@@ -2777,7 +2839,6 @@ function renderPoolList(flashNewIdx, flashGroupIdx) {
       header.appendChild(dissolveBtn);
       header.appendChild(addInGroupBtn);
       groupEl.appendChild(header);
-      setupDrop(groupEl, ({ termIdx, groupItemIdx }) => mergeTerms(termIdx, groupItemIdx, i));
 
       const sortedItems = raw.items.map((item, j) => ({ item, j }));
       if (poolListSort === 'weight-desc') sortedItems.sort((a, b) => _itemW(b.item) - _itemW(a.item));
@@ -2791,16 +2852,7 @@ function renderPoolList(flashNewIdx, flashGroupIdx) {
         const selKey = `${i}:${j}`;
         const row = document.createElement('div');
         row.className = 'pli pli-group-item' + (_multiSelectMode && _multiSelKeys.has(selKey) ? ' pli-selected' : '');
-        row.draggable = !_multiSelectMode;
         row.dataset.termIdx = i; row.dataset.groupItemIdx = j;
-        if (!_multiSelectMode) {
-          row.addEventListener('dragstart', () => { _pliDrag = { termIdx: i, groupItemIdx: j }; });
-          row.addEventListener('dragend', () => { _pliDrag = null; });
-          row.addEventListener('touchstart', e => startTouchDrag(e, i, j, text), { passive: true });
-          row.addEventListener('touchmove', onTouchMove, { passive: false });
-          row.addEventListener('touchend', onTouchEnd);
-          row.addEventListener('touchcancel', onTouchCancel);
-        }
 
         if (_multiSelectMode) {
           const cb = document.createElement('div'); cb.className = 'pli-cb'; cb.textContent = _multiSelKeys.has(selKey) ? '✓' : '';
@@ -2837,17 +2889,7 @@ function renderPoolList(flashNewIdx, flashGroupIdx) {
       const selKey = `${i}`;
       const item = document.createElement('div');
       item.className = 'pli' + (_multiSelectMode && _multiSelKeys.has(selKey) ? ' pli-selected' : '');
-      item.draggable = !_multiSelectMode;
       item.dataset.termIdx = i;
-      if (!_multiSelectMode) {
-        item.addEventListener('dragstart', () => { _pliDrag = { termIdx: i }; });
-        item.addEventListener('dragend', () => { _pliDrag = null; });
-        setupDrop(item, ({ termIdx, groupItemIdx }) => { if (termIdx !== i) mergeTerms(termIdx, groupItemIdx, i); });
-        item.addEventListener('touchstart', e => startTouchDrag(e, i, undefined, text), { passive: true });
-        item.addEventListener('touchmove', onTouchMove, { passive: false });
-        item.addEventListener('touchend', onTouchEnd);
-        item.addEventListener('touchcancel', onTouchCancel);
-      }
 
       if (_multiSelectMode) {
         const cb = document.createElement('div'); cb.className = 'pli-cb'; cb.textContent = _multiSelKeys.has(selKey) ? '✓' : '';
@@ -3843,6 +3885,7 @@ document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('connect-file-btn').addEventListener('click', connectFileSync);
   document.getElementById('restore-file-btn').addEventListener('click', restoreFromFile);
   document.getElementById('export-btn').addEventListener('click', exportJSON);
+  document.getElementById('save-image-btn').addEventListener('click', saveBingoImage);
   document.getElementById('import-input').addEventListener('change', e => {
     if (e.target.files[0]) { importJSON(e.target.files[0]); e.target.value = ''; }
   });

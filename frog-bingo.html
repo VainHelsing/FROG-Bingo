@@ -1450,7 +1450,7 @@ async function writeToFile() {
   if (!fsFileHandle) return;
   try {
     const w = await fsFileHandle.createWritable();
-    await w.write(JSON.stringify(S, null, 2));
+    await w.write(JSON.stringify(sToBackup(), null, 2));
     await w.close();
     flashSyncSaved();
   } catch (e) {
@@ -1509,10 +1509,12 @@ async function restoreFromFile() {
   try {
     const file = await fsFileHandle.getFile();
     const data = JSON.parse(await file.text());
-    S = Object.assign(blankState(), data);
-    S.pools.default = (S.pools.default || []).map(t =>
-      typeof t === 'string' ? { text: t, weight: 2 } : t
-    );
+    S = data.version ? backupToS(data) : Object.assign(blankState(), data);
+    if (!data.version) {
+      S.pools.default = (S.pools.default || []).map(t =>
+        typeof t === 'string' ? { text: t, weight: 2 } : t
+      );
+    }
     try { localStorage.setItem('frog-bingo', JSON.stringify(S)); } catch (_) {}
     archiveYesterday();
     if (S.today && S.today.date === todayStr()) {
@@ -1547,8 +1549,110 @@ async function initFileSync() {
 
 // ── Export / Import ────────────────────────────────────────────────────────
 
+// Convert internal S object → BackupData (app-compatible format)
+function sToBackup() {
+  const uid = () => crypto.randomUUID();
+  function termOut(t) {
+    if (t.type === 'group') {
+      return { id: uid(), type: 'group', text: '', weight: 2,
+               groupTitle: t.title ?? null,
+               groupItems: (t.items || []).map(i => ({ id: uid(), type: 'term', text: i.text, weight: i.weight ?? 2, groupTitle: null, groupItems: null })) };
+    }
+    return { id: uid(), type: 'term', text: t.text, weight: t.weight ?? 2, groupTitle: null, groupItems: null };
+  }
+
+  const pools = [{ name: '默认事件池', isDefault: true, sortOrder: 0, terms: (S.pools.default || []).map(termOut) }];
+  const customSlots = S.pools.custom || [];
+  const poolOrder = S.poolOrder || customSlots.map((_, i) => i);
+  let displayOrder = 1;
+  poolOrder.forEach(slotIdx => {
+    const cp = customSlots[slotIdx];
+    if (cp && cp.terms && cp.terms.length > 0)
+      pools.push({ name: cp.name, isDefault: false, sortOrder: displayOrder++, terms: cp.terms.map(termOut) });
+  });
+
+  const records = [];
+  (S.history || []).forEach(h => {
+    const total = h.total ?? 0;
+    const done = h.done ?? 0;
+    const cells = Array.from({ length: total }, (_, i) => ({
+      id: uid(), text: '', poolId: null, isDone: i < done, isBig: false, weight: 2,
+    }));
+    const size = total > 0 ? Math.round(Math.sqrt(total)) : 5;
+    records.push({ dateKey: h.date, size, tier: h.tier, cells, btPositions: [] });
+  });
+  if (S.today) {
+    const btSet = new Set(S.today.btPositions || []);
+    let btIdx = 0;
+    const cells = (S.today.board || []).map((c, i) => ({
+      id: uid(), text: c.text, poolId: null,
+      isDone: c.completed ?? false,
+      isBig: btSet.has(i),
+      weight: c.weight ?? 2,
+    }));
+    records.push({ dateKey: S.today.date, size: S.today.n, tier: 0, cells, btPositions: S.today.btPositions || [] });
+  }
+
+  return {
+    version: 2,
+    exportedAt: todayStr(),
+    pools,
+    boardSize: S.today?.n ?? 5,
+    bigTasks: S.today?.bigTasks ?? [''],
+    poolAllocations: S.poolAllocations || [0, 0, 0, 0],
+    resetHour: S.resetHour ?? 0,
+    records,
+  };
+}
+
+// Convert BackupData → internal S object
+function backupToS(backup) {
+  function termIn(t) {
+    if (t.type === 'group') {
+      return { type: 'group', title: t.groupTitle ?? null,
+               items: (t.groupItems || []).map(i => ({ text: i.text, weight: i.weight ?? 2 })) };
+    }
+    return { text: t.text ?? '', weight: t.weight ?? 2 };
+  }
+
+  const state = blankState();
+  const defPool = (backup.pools || []).find(p => p.isDefault);
+  const customPools = [...(backup.pools || []).filter(p => !p.isDefault)]
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  if (defPool) state.pools.default = defPool.terms.map(termIn);
+  customPools.slice(0, 4).forEach((cp, i) => {
+    state.pools.custom[i] = { name: cp.name, terms: cp.terms.map(termIn), unlocked: false };
+  });
+  state.poolAllocations = backup.poolAllocations || [0, 0, 0, 0];
+  state.poolOrder = [0, 1, 2, 3];
+  state.resetHour = backup.resetHour ?? 0;
+
+  const today = todayStr();
+  for (const r of (backup.records || [])) {
+    if (r.cells && r.cells.length > 0) {
+      const btSet = new Set(r.btPositions || []);
+      let btIdx = 0;
+      const board = r.cells.map((c, i) => ({
+        text: c.text, weight: c.weight ?? 2,
+        isBigTask: btSet.has(i), bigTaskIdx: btSet.has(i) ? btIdx++ : null,
+        completed: c.isDone ?? false,
+      }));
+      if (r.dateKey === today) {
+        state.today = { date: r.dateKey, n: r.size, bigTasks: backup.bigTasks || [],
+                        board, btPositions: r.btPositions || [], btbSnapshot: 0,
+                        usedRegret: false, everDone: board.some(c => c.completed) };
+      } else {
+        state.history.push({ date: r.dateKey, tier: r.tier });
+      }
+    } else {
+      state.history.push({ date: r.dateKey, tier: r.tier });
+    }
+  }
+  return state;
+}
+
 function exportJSON() {
-  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(sToBackup(), null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -1726,10 +1830,12 @@ function importJSON(file) {
   reader.onload = e => {
     try {
       const data = JSON.parse(e.target.result);
-      S = Object.assign(blankState(), data);
-      S.pools.default = (S.pools.default || []).map(t =>
-        typeof t === 'string' ? { text: t, weight: 2 } : t
-      );
+      S = data.version ? backupToS(data) : Object.assign(blankState(), data);
+      if (!data.version) {
+        S.pools.default = (S.pools.default || []).map(t =>
+          typeof t === 'string' ? { text: t, weight: 2 } : t
+        );
+      }
       save();
       archiveYesterday();
       if (S.today && S.today.date === todayStr()) {
@@ -1738,7 +1844,7 @@ function importJSON(file) {
       renderPools();
       renderHistory();
     } catch (_) {
-      alert('导入失败，文件格式不正确。');
+      alert('导入失败，请导入网页版或 App 导出的 JSON 文件。');
     }
   };
   reader.readAsText(file);
@@ -2088,9 +2194,11 @@ function showBanner(msg) {
 
 function recordToday() {
   if (!S.today) return;
-  const tier = detectTier(S.today.board, S.today.n, S.today.btPositions);
+  const { board, n, btPositions } = S.today;
+  const tier = detectTier(board, n, btPositions);
+  const done = board.filter(c => c.completed).length;
   const idx = S.history.findIndex(h => h.date === S.today.date);
-  const rec = { date: S.today.date, tier };
+  const rec = { date: S.today.date, tier, done, total: board.length };
   if (idx >= 0) S.history[idx] = rec; else S.history.push(rec);
   save();
 }
